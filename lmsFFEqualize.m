@@ -83,7 +83,7 @@ function [output, w, costs] = lmsFFEqualize(InputSignal, TrainingSignal, varargi
 		costs(n) = costs(n) / (length(InputSignalZP) - FFETaps + 1);
 	end
 	
-	%% Using Trained Weights to Equalizing Data
+	%% Using Trained Weights to Equalize Data
 	for i = 1 : length(InputSignalZP) - FFETaps + 1
 		y(i) = w' * InputSignalZP(i : i + FFETaps - 1);
 	end
