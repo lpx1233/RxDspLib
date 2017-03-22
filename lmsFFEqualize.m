@@ -90,5 +90,6 @@ function [output, w, costs] = lmsFFEqualize(InputSignal, TrainingSignal, varargi
 	
 	y = y';
 	
+	% TODO choose a half of the output
 	output = y(1 : length(y) / 2);
-	output = y(length(y) / 2 + 1 : end);
+	% output = y(length(y) / 2 + 1 : end);
