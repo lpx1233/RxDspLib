@@ -31,7 +31,7 @@ for i = 1 : length(files) - 2
 
 	%% LMS Equalization
 	% 101-tap FFE and training for 20 epochs
-	[equalizedSignal(:,i), w] = lmsFFEqualize(ExtractedSignal(:,i), OriginalSignal(:,i), 'lms', 101, 0.01, 20);
+	[equalizedSignal(:,i), w] = linearFFEqualize(ExtractedSignal(:,i), OriginalSignal(:,i), 'lms', 101, 0.01, 20);
 	% Equalization Result Visulization
 	% eyediagram(equalizedSignal, 4*OverSamplingRatio, 2*OverSamplingRatio, 0.5*OverSamplingRatio);
 	% grid on;

@@ -131,7 +131,7 @@ function [output, w, costs] = volLMSFFEqualize(InputSignal, TrainingSignal, vara
 	
 	%% Training epoch times
 	costs = zeros(epoch, 1);
-	for n = 1 : epoch
+	for iter = 1 : epoch
 		for i = 1 : length(InputSignalZP) - chanLen + 1
 			% Forming 2nd and 3rd kernel
 			x = InputSignalZP(i : i + chanLen - 1);
@@ -171,10 +171,10 @@ function [output, w, costs] = volLMSFFEqualize(InputSignal, TrainingSignal, vara
 			alpha = diag(alpha);
 			% learning step
 			w = w - alpha * (y(i) - TrainingSignalDup(i)) * kernel;
-			costs(n) = costs(n) + 0.5 * ((y(i) - TrainingSignalDup(i)) ^ 2);
+			costs(iter) = costs(iter) + 0.5 * ((y(i) - TrainingSignalDup(i)) ^ 2);
 		end
 		% Record the cost/error of each epoch
-		costs(n) = costs(n) / (length(InputSignalZP) - chanLen + 1);
+		costs(iter) = costs(iter) / (length(InputSignalZP) - chanLen + 1);
 	end
 
 	%% Using Trained Weights to Equalize Data
