@@ -9,6 +9,7 @@
 * 该readme的编写
 * 新的均衡算法的实现
   * Volterra RLS FFE
+  * Volterra 系数简化算法
   * MLSE（可能暂时基于MATLAB工具箱）
   * Linear DFE
   * Volterra DFE
