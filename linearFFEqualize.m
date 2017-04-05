@@ -20,7 +20,7 @@ function [output, w, costs] = linearFFEqualize(InputSignal, TrainingSignal, vara
 	%       Default: 5
 	%     alpha (optional)
 	%       The learning rate of LMS algorithm or the forgetting factor of RLS.
-	%       Default: 0.01 for AlgType = 'lms', 0.99 for AlgType = 'rls'.
+	%       Default: 0.01 for AlgType = 'lms', 0.99 for AlgType = 'rls'
 	%     epoch (optional)
 	%       The epoch of the learning of LMS through all the input signal.
 	%       Default: 1

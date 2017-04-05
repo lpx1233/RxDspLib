@@ -27,9 +27,8 @@ SampledSignal = importdata('.\Sampled Data\40km+FBG+FILTER+-680\F2_00011.dat');
 %% Signal Synchronization and Extraction
 [ExtractedSignal, OriginalSignal] = syncAndExtractSignal(SampledSignal, OriginalData, OverSamplingRatio);
 
-%% LMS Equalization
-% 101-tap FFE and training for 5 epochs
-[equalizedSignal, w, costs] = volLMSFFEqualize(ExtractedSignal, OriginalSignal, 5, 0.01, 5);
+%% Volterra FFE Equalization
+[EqualizedSignal, w, costs] = volLMSFFEqualize(ExtractedSignal, OriginalSignal, 5, 0.01, 10);
 
 % plot the curve of convergence
 figure;
@@ -39,14 +38,14 @@ xlabel('Epoch'); ylabel('Cost');
 
 %% Signal Decision and BER Calculation
 % For the unequalized signal
-[BitErrorRate, SymErrorRate, BitErrorNum] = decisionAndCalcBerPAM4(ExtractedSignal, (OriginalSignal + 3) / 2);
+[BitErrorRate, SymErrorRate, BitErrorNum] = decisionAndCalcBerPAM4(ExtractedSignal, OriginalSignal);
 fprintf('\nThe signal error before equalization\n');
 fprintf('Bit number num: %d \n', BitErrorNum);
 fprintf('SER: %e\n', SymErrorRate);
 fprintf('BER: %e\n', BitErrorRate);
 
 % For the equalized signal
-[BitErrorRate, SymErrorRate, BitErrorNum] = decisionAndCalcBerPAM4(equalizedSignal, (OriginalSignal + 3) / 2);
+[BitErrorRate, SymErrorRate, BitErrorNum] = decisionAndCalcBerPAM4(EqualizedSignal, OriginalSignal);
 fprintf('\nThe signal error after equalization\n');
 fprintf('Bit number num: %d \n', BitErrorNum);
 fprintf('SER: %e\n', SymErrorRate);

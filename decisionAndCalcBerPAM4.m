@@ -33,6 +33,8 @@ function [BitErrorRate, SymErrorRate, BitErrorNum] = decisionAndCalcBerPAM4(Inpu
 	%% Input Signal Normalization
 	InputSignal = InputSignal - min(InputSignal);
 	InputSignal = InputSignal / max(InputSignal);
+	OriginalData = OriginalData - min(OriginalData);
+	OriginalData = (OriginalData / max(OriginalData)) * 3;
 	
 	%% Input Signal Decision
 	InputSignal(find(InputSignal > threshold(3))) = 3;
