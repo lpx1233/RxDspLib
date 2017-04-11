@@ -28,7 +28,7 @@ SampledSignal = importdata('.\Sampled Data\40km+FBG+FILTER+-680\F2_00011.dat');
 [ExtractedSignal, OriginalSignal] = syncAndExtractSignal(SampledSignal, OriginalData, OverSamplingRatio);
 
 %% Volterra FFE Equalization
-[EqualizedSignal, w, costs] = volLMSFFEqualize(ExtractedSignal, OriginalSignal, 'lms', 10, 5, 0.01);
+[EqualizedSignal, w, costs] = volterraFFEqualize(ExtractedSignal, OriginalSignal, 'lms', 10, 5, 0.01);
 
 % plot the curve of convergence
 figure;
