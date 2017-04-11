@@ -1,4 +1,4 @@
-function [BitErrorRate, SymErrorRate, BitErrorNum] = decisionAndCalcBerPAM4(InputSignal, OriginalData, vargin)
+function [BitErrorRate, SymErrorRate, BitErrorNum] = decisionAndCalcBerPAM4(InputSignal, OriginalData, threshold)
 	% This function performs the PAM4 decision and bit error ratio calculation for PAM4.
 	% First the PAM4 decision will be performed and then the error counting and error ratio
 	%	calculation. The %threshold% for PAM4 decision is a optional parameter, which have the
@@ -24,10 +24,9 @@ function [BitErrorRate, SymErrorRate, BitErrorNum] = decisionAndCalcBerPAM4(Inpu
 	
 	%% Parameters Checking
 	narginchk(2, 3);
-	if nargin == 2
+	
+	if ~exist('threshold','var') || isempty(threshold)
 		threshold = [0.25; 0.5; 0.75];
-	else
-		threshold = varargin{1};
 	end
 	
 	%% Input Signal Normalization

@@ -1,11 +1,14 @@
-function [output, ChnlCoeffs, costs] = mlseEqualize(InputSignal, TrainingSignal, varargin)
-	% This function performs the feed forward equalization with LMS or RLS algorithm.
-	% First, the %InputSignal% and %TrainingSignal% will be normalized to 0-1.
-	% The training will use all the %InputSignal% and will be performed %epoch% times.
-	% The %alpha% is the learning rate of LMS or the forgetting factor of RLS, 
-	% which should be chosen carefully with the help of curve of convergence. 
-	% After training, the equalization will be performed and then the result will 
-	% be returned.
+function [output, ChnlCoeffs, costs] = mlseEqualize(InputSignal, TrainingSignal, ...
+																										TraceBackLen, SamplesPerSymbol, ...
+																										ChanLen, ModFormat, ...
+																										epoch, alpha)
+	% This function performs equalization based on maximum likelhood sequence estimation.
+	% First, the InputSignal and TrainingSignal will be normalized to 0-1.
+	% Then, the inverse linear FFE, which is a channel estimation, is performed
+	% using a ChanLen taps FFE with a learning rate of alpha and training epoch times.
+	% After training, the MLSE equalization using MATLAB Comm. Toolbox will be performed 
+	% and then the result will be returned. The parameter of MLSE equalizer such as TraceBackLen
+	% and SamplesPerSymbol can be specified. The ModFormat determine the signal constellation map.
 	%
 	% input: 
 	%     InputSignal
@@ -44,35 +47,23 @@ function [output, ChnlCoeffs, costs] = mlseEqualize(InputSignal, TrainingSignal,
 	%% Parameter Checking
 	narginchk(2, 8);
 	
-	if nargin == 2
+	if ~exist('TraceBackLen','var') || isempty(TraceBackLen)
 		TraceBackLen = 4;
-	else
-		TraceBackLen = varargin{1};
 	end
-	if nargin <= 3
+	if ~exist('SamplesPerSymbol','var') || isempty(SamplesPerSymbol)
 		SamplesPerSymbol = 1;
-	else
-		SamplesPerSymbol = varargin{2};
 	end
-	if nargin <= 4
+	if ~exist('ChanLen','var') || isempty(ChanLen)
 		ChanLen = 5;
-	else
-		ChanLen = varargin{3};
 	end
-	if nargin <= 5
+	if ~exist('ModFormat','var') || isempty(ModFormat)
 		ModFormat = 'PAM4';
-	else
-		ModFormat = varargin{4};
 	end
-	if nargin <= 6
+	if ~exist('epoch','var') || isempty(epoch)
 		epoch = 5;
-	else
-		epoch = varargin{5};
 	end
-	if nargin <= 7
-		alpha = 0.01;
-	else
-		alpha = varargin{6};
+	if ~exist('alpha','var') || isempty(alpha)
+		alpha = 0.01
 	end
 	
 	%% Signal Normalization and Duplication
@@ -106,7 +97,7 @@ function [output, ChnlCoeffs, costs] = mlseEqualize(InputSignal, TrainingSignal,
 	ChnlCoeffs = w(end:-1:1);
 
 	%% MLSE equalization using MATLAB Commmunication Toolbox
-	% Generating constallation map for different modulation format
+	% Generating constellation map for different modulation format
 	if ModFormat == 'PAM4'
 		% const = [1/8; 3/8; 5/8; 7/8];
 		const = [0; 1/3; 2/3; 1];

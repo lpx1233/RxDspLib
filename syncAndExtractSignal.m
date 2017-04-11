@@ -1,4 +1,4 @@
-function [ExtractedSignalUS, OriginalSignalUS] = syncAndExtractSignal(SampledData, OriginalData, OverSamplingRatio, varargin)
+function [ExtractedSignalUS, OriginalSignalUS] = syncAndExtractSignal(SampledData, OriginalData, OverSamplingRatio, UpSamplingRatio)
 	% This function performs the synchronization and signal extraction for the 
 	% sampled signal from DSO. The %SampledData% will be down sampled by the 
 	% %OverSamplingRatio%/%UpSamplingRatio% and correlated with the %OriginalData%
@@ -15,7 +15,7 @@ function [ExtractedSignalUS, OriginalSignalUS] = syncAndExtractSignal(SampledDat
 	% 			rate dividing signal symbol rate
 	%		  UpSamplingRatio (optional)
 	%				The ratio of up sampling progress.
-	%				Default value: 2
+	%				Default value: 1
 	% output:
 	%     ExtractedSignalUS
 	%       The synchronized and extracted signal upsampled by %UpSamplingRatio%.
@@ -26,10 +26,9 @@ function [ExtractedSignalUS, OriginalSignalUS] = syncAndExtractSignal(SampledDat
 	
 	% Parameters checking
 	narginchk(3,4);
-	if nargin == 3
+
+	if ~exist('UpSamplingRatio','var') || isempty(UpSamplingRatio)
 		UpSamplingRatio = 1;
-	else
-		UpSamplingRatio = varargin{1};
 	end
 	
 	% Downsampling

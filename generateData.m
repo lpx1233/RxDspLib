@@ -1,4 +1,5 @@
-function OriginalData = generateData(varargin)
+function OriginalData = generateData(OriginalDataLength, PAM4Flag, ...
+																		 NewPRBSGenerationFlag, SyncZerosLength)
 	% This function generate NRZ or PAM4 data from PRBS generator or local file 
 	% and then generate the data with synchronization header which is then 
 	% loaded to PPG.
@@ -29,25 +30,21 @@ function OriginalData = generateData(varargin)
 	%       Size: OriginalDataLength, 1
 	
 	narginchk(0,4);
-	if nargin == 0
+	
+	if ~exist('OriginalDataLength','var') || isempty(OriginalDataLength)
 		OriginalDataLength = 2^12;
-	else
-		OriginalDataLength = varargin{1};
 	end
-	if nargin <= 1
+	
+	if ~exist('PAM4Flag','var') || isempty(PAM4Flag)
 		PAM4Flag = 1;
-	else
-		PAM4Flag = varargin{2};
 	end
-	if nargin <= 2
+	
+	if ~exist('NewPRBSGenerationFlag','var') || isempty(NewPRBSGenerationFlag)
 		NewPRBSGenerationFlag = 0;
-	else
-		NewPRBSGenerationFlag = varargin{3};
 	end
-	if nargin <= 3
+	
+	if ~exist('SyncZerosLength','var') || isempty(SyncZerosLength)
 		SyncZerosLength = 50;
-	else
-		SyncZerosLength = varargin{4};
 	end
 	
 	% change the current directory to the folder which contains this m file
@@ -63,7 +60,6 @@ function OriginalData = generateData(varargin)
 	
 	%% PRBS generation
 	if (NewPRBSGenerationFlag == 1) || (exist(strcat(PathToOriginalData, OriginalDataFileName, '.txt'), 'file') == 0)
-		rng('shuffle'); % TODO the seed of prbs generator cannot be changed
 		h = commsrc.pattern('SamplingFrequency', 10000, ...
 							'SamplesPerSymbol', 1, ...
 							'PulseType', 'NRZ', ...
