@@ -1,8 +1,9 @@
-function [output, w, costs] = linearFFEqualize(InputSignal, TrainingSignal, varargin)
+function [output, w, costs] = linearFFEqualize(InputSignal, TrainingSignal, AlgType, ...
+																							 FFETaps, alpha, epoch)
 	% This function performs the feed forward equalization with LMS or RLS algorithm.
-	% First, the %InputSignal% and %TrainingSignal% will be normalized to 0-1.
-	% The training will use all the %InputSignal% and will be performed %epoch% times.
-	% The %alpha% is the learning rate of LMS or the forgetting factor of RLS, 
+	% First, the InputSignal and TrainingSignal will be normalized to 0-1.
+	% The training will use all the InputSignal and will be performed epoch times.
+	% The alpha is the learning rate of LMS or the forgetting factor of RLS, 
 	% which should be chosen carefully with the help of curve of convergence. 
 	% After training, the equalization will be performed and then the result will 
 	% be returned.
@@ -12,9 +13,8 @@ function [output, w, costs] = linearFFEqualize(InputSignal, TrainingSignal, vara
 	%       The input signal to be equalized.
 	%     TrainingSignal
 	%       The actual signal to be equalized to.
-	%     AlgType (optional)
+	%     AlgType
 	%       'lms' for LMS or 'rls' for RLS.
-	%       Default: 'lms'
 	%     FFETaps (optional)
 	%       The numbers of FFE taps which must be odd.
 	%       Default: 5
@@ -36,38 +36,35 @@ function [output, w, costs] = linearFFEqualize(InputSignal, TrainingSignal, vara
 	%       curve of convergence and thus determine the best learning rate.
 	
 	%% Parameter Checking
-	narginchk(2, 6);
+	narginchk(3, 6);
 	
-	if nargin == 2
-		AlgType = 'lms';
-	else
-		AlgType = varargin{1};
-	end
-	if nargin <= 3
+	if ~exist('FFETaps','var') || isempty(FFETaps)
 		FFETaps = 5;
-	else
-		FFETaps = varargin{2};
 	end
-	if nargin <= 4
+	
+	if ~exist('alpha','var') || isempty(alpha)
 		if AlgType == 'lms'
 			alpha = 0.01;
 		elseif AlgType == 'rls'
 			alpha = 0.99;
-		else
-			error('linearFeedForwardEqualize:argChk', 'AlgType must be lms or rls');
 		end
-	else
-		alpha = varargin{3};
-	end
-	if nargin <= 5
-		epoch = 1;
-	else
-		epoch = varargin{4};
 	end
 	
-	% FFETaps must equals to a odd number
+	if ~exist('epoch','var') || isempty(epoch)
+		epoch = 1;
+	end
+	
+	% TODO add some parameter checking
 	if mod(FFETaps, 2) == 0
-		error('lmsFeedForwardEqualize:argChk', 'FFE taps must be odd');
+		error('linearFeedForwardEqualize:argChk', 'FFE taps must be odd');
+	end
+	
+	if (AlgType ~= 'lms') && (AlgType ~= 'rls')
+		error('linearFeedForwardEqualize:argChk', 'AlgType must be lms or rls');
+	end
+
+	if FFETaps <= 0
+		error('linearFeedForwardEqualize:argChk', 'FFE taps must be bigger than 0');
 	end
 	
 	%% Signal Normalization and Duplication
@@ -84,11 +81,16 @@ function [output, w, costs] = linearFFEqualize(InputSignal, TrainingSignal, vara
 	InputSignalZP = [zeros(floor(FFETaps/2), 1); InputSignalDup; zeros(floor(FFETaps/2), 1)];
 	
 	%% Weights Initializing
-	w = zeros(FFETaps, 1);
-	w(floor(length(w)/2) + 1) = 1;
+	% TODO choose on : randomly init weights or init to 0
+	% w = zeros(FFETaps, 1);
+	% w(floor(length(w)/2) + 1) = 1;
+	rng('shuffle');
+	w = rand(FFETaps, 1);
+	w = 2 * w - 1;
 	
 	%% Training
 	costs = zeros(epoch, 1);
+	y = zeros(size(TrainingSignalDup));
 	if AlgType == 'lms'
 		% The LMS learning algorithm
 		for n = 1 : epoch
@@ -121,8 +123,6 @@ function [output, w, costs] = linearFFEqualize(InputSignal, TrainingSignal, vara
 	for i = 1 : length(InputSignalZP) - FFETaps + 1
 		y(i) = w' * InputSignalZP(i : i + FFETaps - 1);
 	end
-	
-	y = y';
 	
 	% TODO choose a half of the output
 	output = y(1 : length(y) / 2);

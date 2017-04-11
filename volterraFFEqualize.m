@@ -1,14 +1,15 @@
-function [output, w, costs] = volLMSFFEqualize(InputSignal, TrainingSignal, ...
+function [output, w, costs] = volterraFFEqualize(InputSignal, TrainingSignal, ...
 																								AlgType, epoch, ...
 																								ChanLen1st, Alpha1st, ...
 																								ChanLen2nd, Alpha2nd, ...
-																								ChanLen3rd, Alpha3rd)
-	% This function performs the volterra feedforward equalization with LMS algorithm.
+																								ChanLen3rd, Alpha3rd, ...
+																								EnRAE)
+	% This function performs the volterra feedforward equalization with LMS or RLS algorithm.
 	% For now only 1st-3rd order are supported. 1st order must be included, while 2nd 
-	% and 3rd orders are optional and controlled by the %en2ndOrder% and %en3rdOrder%
-	% flags. The learning rate of different order can be different by adjusting the 
-	% %alpha1st%, %alpha2nd% and %alpha3rd%. The equalizer will be trained on the 
-	% %InputSignal% %epoch% times and will then perform a equalization.
+	% and 3rd orders are optional and controlled by the ChanLen2nd and ChanLen3rd
+	% flags. The LMS learning rate of different order can be different by adjusting the 
+	% Alpha1st, Alpha2nd and Alpha3rd. The equalizer will be trained on the 
+	% InputSignal epoch times and will then perform a equalization.
 	% 
 	% input:
 	%     InputSignal
@@ -40,6 +41,9 @@ function [output, w, costs] = volLMSFFEqualize(InputSignal, TrainingSignal, ...
 	%       The 3rd order kernel learning rate of LMS algorithm or the forgetting factor of RLS.
 	%       In rls algorithm, this parameter is forced to be Alpha1st.
 	%       Default: Alpha1st
+	%     EnRAE (optional)
+	%       The flag of enable RAE search algorithm.
+	%       Default: true
 	%
 	% output:
 	%     output
@@ -47,20 +51,13 @@ function [output, w, costs] = volLMSFFEqualize(InputSignal, TrainingSignal, ...
 	%       Size: length(InputSignal), 1
 	%     w
 	%       Weights of volterra series
-	%       Size: chanLen + Kernel2ndSize + Kernel3rdSize, 1
+	%       Size: length(Q, 2), 1
 	%     costs
 	%       The costs after each training epoch, which is used to draw a 
-	%       curve of convergence and thus dete_raermine the best learning rate.
-	
-	% TODO test
+	%       curve of convergence and thus determine the best learning rate.
 	
 	%% Paramete_raer Checking
-	narginchk(2, 10);
-	
-	% algorithm type must be lms or rls
-	if (AlgType ~= 'lms') & (AlgType ~= 'rls')
-		error('volterraFeedForwardEqualize:argChk', 'AlgType must be lms or rls');
-	end
+	narginchk(3, 11);
 	
 	if ~exist('epoch','var') || isempty(epoch)
 		epoch = 1;
@@ -74,30 +71,42 @@ function [output, w, costs] = volLMSFFEqualize(InputSignal, TrainingSignal, ...
 			Alpha1st = 0.01;
 		elseif AlgType == 'rls'
 			Alpha1st = 0.99;
-		else
-			error('volterraFeedForwardEqualize:argChk', 'AlgType must be lms or rls');
 		end
 	end
 	
 	if ~exist('ChanLen2nd','var') || isempty(ChanLen2nd)
 		ChanLen2nd = ChanLen1st;
 	end
+	
 	if ~exist('Alpha2nd','var') || isempty(Alpha2nd)
 		Alpha2nd = Alpha1st;
 	end
-	
+
 	if ~exist('ChanLen3rd','var') || isempty(ChanLen3rd)
 		ChanLen3rd = ChanLen1st;
 	end
+	
 	if ~exist('Alpha3rd','var') || isempty(Alpha3rd)
-		ChanLen3rd = Alpha1st;
+		Alpha3rd = Alpha1st;
 	end
-
-	% channel length must equals to a odd number
-	if (mod(ChanLen1st, 2) == 0) | (mod(ChanLen2nd, 2) == 0) | (mod(ChanLen3rd, 2) == 0)
+	
+	if ~exist('EnRAE','var') || isempty(EnRAE)
+		EnRAE = true;
+	end
+	
+	% TODO add some parameter checking
+	if (mod(ChanLen1st, 2) == 0) || (mod(ChanLen2nd, 2) == 0) || (mod(ChanLen3rd, 2) == 0)
 		error('volterraFeedForwardEqualize:argChk', 'Channel length must be odd');
 	end
+	
+	if (AlgType ~= 'lms') && (AlgType ~= 'rls')
+		error('volterraFeedForwardEqualize:argChk', 'AlgType must be lms or rls');
+	end
 
+	if ChanLen1st <= 0
+		error('volterraFeedForwardEqualize:argChk', '1st order channel length must be bigger than 0');
+	end
+	
 	%% Signal Normalization and Duplication
 	% InputSignal and TrainingSignal is normalized to the range between 0-1.
 	InputSignal = InputSignal - min(InputSignal);
@@ -171,57 +180,64 @@ function [output, w, costs] = volLMSFFEqualize(InputSignal, TrainingSignal, ...
 	end
 	
 	% RAE process: Q is the output selected kernel matrix
-	y = TrainingSignalDup;
-	p = 1;
-	epsilon = 0.01;
-	ete_rae = zeros(KernelSize, KernelSize);
-	
-	for i = 1 : KernelSize
-		w_rae = (X(:, i)' * y) / (X(:, i)' * X(:, i));
-		ete_rae(1, i) = y' * y - w_rae * X(:, i)' * y;
-	end
-	[ete_rae_min, i] = min(ete_rae(1, :));
-	w_rae = (X(:, i)' * y) / (X(:, i)' * X(:, i));
-	Q = [X(:, i)];
-	if i <= ChanLen1st
-		KernelOrder = [1];
-	elseif i <= ChanLen1st + Kernel2ndSize
-		KernelOrder = [2];
-	else
-		KernelOrder = [3];
-	end
-	R = Q' / (Q' * Q);
-	p = p + 1;
-
-	while (ete_rae_min > (epsilon * length(InputSignalDup))) | (p ~= KernelSize)
+	if EnRAE == true
+		y = TrainingSignalDup;
+		p = 1;
+		epsilon = 0.01;
+		ete_rae = zeros(KernelSize, KernelSize);
+		
 		for i = 1 : KernelSize
-			if ismember(X(:, i)', Q', 'rows') == 1
-				continue
+			w_rae = (X(:, i)' * y) / (X(:, i)' * X(:, i));
+			ete_rae(1, i) = y' * y - w_rae * X(:, i)' * y;
+		end
+		[ete_rae_min, i] = min(ete_rae(1, :));
+		w_rae = (X(:, i)' * y) / (X(:, i)' * X(:, i));
+		Q = [X(:, i)];
+		if i <= ChanLen1st
+			KernelOrder = [1];
+		elseif i <= ChanLen1st + Kernel2ndSize
+			KernelOrder = [2];
+		else
+			KernelOrder = [3];
+		end
+		R = Q' / (Q' * Q);
+		p = p + 1;
+
+		while (ete_rae_min > (epsilon * length(InputSignalDup))) | (p ~= KernelSize)
+			for i = 1 : KernelSize
+				if ismember(X(:, i)', Q', 'rows') == 1
+					continue
+				end
+				z_rae = R * X(:, i);
+				delta_rae = 1 / (X(:, i)' * X(:, i) - X(:, i)' * Q * z_rae);
+				g_rae = delta_rae * (z_rae' * Q' - X(:, i)');
+				w_rae_temp = [w_rae + z_rae * g_rae * y; -g_rae * y];
+				ete_rae(p, i) = y' * y - y' * [Q, X(:, i)] * w_rae_temp;
 			end
+			[ete_rae_min, i] = min(ete_rae(p, :));
 			z_rae = R * X(:, i);
 			delta_rae = 1 / (X(:, i)' * X(:, i) - X(:, i)' * Q * z_rae);
 			g_rae = delta_rae * (z_rae' * Q' - X(:, i)');
-			w_rae_temp = [w_rae + z_rae * g_rae * y; -g_rae * y];
-			ete_rae(p, i) = y' * y - y' * [Q, X(:, i)] * w_rae_temp;
+			w_rae = [w_rae + z_rae * g_rae * y; -g_rae * y];
+			Q = [Q, X(:, i)];
+			if i <= ChanLen1st
+				KernelOrder = [KernelOrder; 1];
+			elseif i <= ChanLen1st + Kernel2ndSize
+				KernelOrder = [KernelOrder; 2];
+			else
+				KernelOrder = [KernelOrder; 3];
+			end
+			R = [R + z_rae * g_rae; -g_rae];
+			p = p + 1;
 		end
-		[ete_rae_min, i] = min(ete_rae(p, :));
-		z_rae = R * X(:, i);
-		delta_rae = 1 / (X(:, i)' * X(:, i) - X(:, i)' * Q * z_rae);
-		g_rae = delta_rae * (z_rae' * Q' - X(:, i)');
-		w_rae = [w_rae + z_rae * g_rae * y; -g_rae * y];
-		Q = [Q, X(:, i)];
-		if i <= ChanLen1st
-			KernelOrder = [KernelOrder; 1];
-		elseif i <= ChanLen1st + Kernel2ndSize
-			KernelOrder = [KernelOrder; 2];
-		else
-			KernelOrder = [KernelOrder; 3];
-		end
-		R = [R + z_rae * g_rae; -g_rae];
-		p = p + 1;
+	else
+		Q = X;
+		KernelOrder = [zeros(ChanLen1st, 1) + 1;
+									 zeros(Kernel2ndSize, 1) + 2;
+									 zeros(Kernel3rdSize, 1) + 3;];
 	end
-	
 	% Define and randomly init weights vector to (-1, 1)
+	rng('shuffle');
 	w = rand(length(Q, 2), 1);
 	w = 2 * w - 1;
 	
@@ -229,6 +245,7 @@ function [output, w, costs] = volLMSFFEqualize(InputSignal, TrainingSignal, ...
 	costs = zeros(epoch, 1);
 	y = zeros(size(TrainingSignalDup));
 	if AlgType == 'lms'
+		% The LMS learning algorithm
 		for iter = 1 : epoch
 			for i = 1 : length(Q, 1)
 				y(i) = Q(i, :) * w;
@@ -240,59 +257,29 @@ function [output, w, costs] = volLMSFFEqualize(InputSignal, TrainingSignal, ...
 				costs(iter) = costs(iter) + 0.5 * ((y(i) - TrainingSignalDup(i)) ^ 2);
 			end
 			% Record the cost/error of each epoch
-			costs(iter) = costs(iter) / (length(InputSignalZP) - chanLen + 1);
+			costs(iter) = costs(iter) / length(Q, 1);
 		end
 	elseif AlgType == 'rls'
-		% TODO implement rls algorithm
 		% The RLS learning algorithm
 		Sd = eye(length(Q, 2));
-		for n = 1 : epoch
-			for i = 1 : length(InputSignalZP) - FFETaps + 1
-				x = InputSignalZP(i : i + FFETaps - 1);
+		for iter = 1 : epoch
+			for i = 1 : length(Q, 1)
+				x = Q(i, :)';
 				e = TrainingSignalDup(i) - w' * x;
 				phi = Sd * x;
 				Sd = (1 / Alpha1st) * (Sd - (phi * phi') / (Alpha1st + phi' * x));
 				w = w + e * Sd * x;
-				costs(n) = costs(n) + 0.5 * (e ^ 2);
+				costs(iter) = costs(iter) + 0.5 * (e ^ 2);
 			end
 			% Record the cost/error of each epoch
-			costs(n) = costs(n) / (length(InputSignalZP) - FFETaps + 1);
+			costs(iter) = costs(iter) / length(Q, 1);
 		end
 	end
 	
 	%% Using Trained Weights to Equalize Data
-	% TODO modify these code to be functional
-	for i = 1 : length(InputSignalZP) - chanLen + 1
-		% Forming 2nd and 3rd kernel
-		x = InputSignalZP(i : i + chanLen - 1);
-		kernel = x;
-		if en2ndOrder == true
-			t = 0;
-			for k = 1 : chanLen
-				for m = k : chanLen
-					t = t + 1;
-					kernel2nd(t, :) = x(k) * x(m);
-				end
-			end
-			kernel = [kernel; kernel2nd];
-		end
-		if en3rdOrder == true
-			t = 0;
-			for k = 1 : chanLen
-				for m = k : chanLen
-					for n = m : chanLen
-						t = t + 1;
-						kernel3rd(t, :) = x(k) * x(m) * x(n);
-					end
-				end
-			end
-			kernel = [kernel; kernel3rd];
-		end
-		% make a equalization
-		y(i) = w' * kernel;
+	for i = 1 : length(Q, 1)
+		y(i) = Q(i, :) * w;
 	end
-	
-	y = y';
 	
 	% TODO choose a half of the output
 	output = y(1 : length(y) / 2);
