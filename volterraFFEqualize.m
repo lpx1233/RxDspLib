@@ -3,7 +3,7 @@ function [output, w, costs] = volterraFFEqualize(InputSignal, TrainingSignal, ..
 																								ChanLen1st, Alpha1st, ...
 																								ChanLen2nd, Alpha2nd, ...
 																								ChanLen3rd, Alpha3rd, ...
-																								EnRAE)
+																								EnRAE, epsilon)
 	% This function performs the volterra feedforward equalization with LMS or RLS algorithm.
 	% For now only 1st-3rd order are supported. 1st order must be included, while 2nd 
 	% and 3rd orders are optional and controlled by the ChanLen2nd and ChanLen3rd
@@ -44,6 +44,9 @@ function [output, w, costs] = volterraFFEqualize(InputSignal, TrainingSignal, ..
 	%     EnRAE (optional)
 	%       The flag of enable RAE search algorithm.
 	%       Default: true
+	%     epsilon (optional)
+	%       The threshold of RAE.
+	%       Default: 0.004
 	%
 	% output:
 	%     output
@@ -57,7 +60,7 @@ function [output, w, costs] = volterraFFEqualize(InputSignal, TrainingSignal, ..
 	%       curve of convergence and thus determine the best learning rate.
 	
 	%% Paramete_raer Checking
-	narginchk(3, 11);
+	narginchk(3, 12);
 	
 	if ~exist('epoch','var') || isempty(epoch)
 		epoch = 1;
@@ -67,9 +70,9 @@ function [output, w, costs] = volterraFFEqualize(InputSignal, TrainingSignal, ..
 		ChanLen1st = 5;
 	end
 	if ~exist('Alpha1st','var') || isempty(Alpha1st)
-		if AlgType == 'lms'
+		if strcmp(AlgType, 'lms')
 			Alpha1st = 0.01;
-		elseif AlgType == 'rls'
+		elseif strcmp(AlgType, 'rls')
 			Alpha1st = 0.99;
 		end
 	end
@@ -94,12 +97,16 @@ function [output, w, costs] = volterraFFEqualize(InputSignal, TrainingSignal, ..
 		EnRAE = true;
 	end
 	
+	if ~exist('epsilon','var') || isempty(epsilon)
+		epsilon = 0.004;
+	end
+	
 	% TODO add some parameter checking
 	if (mod(ChanLen1st, 2) == 0) || (mod(ChanLen2nd, 2) == 0) || (mod(ChanLen3rd, 2) == 0)
 		error('volterraFeedForwardEqualize:argChk', 'Channel length must be odd');
 	end
 	
-	if (AlgType ~= 'lms') && (AlgType ~= 'rls')
+	if ~strcmp(AlgType, 'lms') && ~strcmp(AlgType, 'rls')
 		error('volterraFeedForwardEqualize:argChk', 'AlgType must be lms or rls');
 	end
 
@@ -183,7 +190,6 @@ function [output, w, costs] = volterraFFEqualize(InputSignal, TrainingSignal, ..
 	if EnRAE == true
 		y = TrainingSignalDup;
 		p = 1;
-		epsilon = 0.01;
 		ete_rae = zeros(KernelSize, KernelSize);
 		
 		for i = 1 : KernelSize
@@ -200,12 +206,17 @@ function [output, w, costs] = volterraFFEqualize(InputSignal, TrainingSignal, ..
 		else
 			KernelOrder = [3];
 		end
+		% find the center position
+		if i == floor(ChanLen1st / 2) + 1
+			CenterPosition = size(Q, 2);
+		end
 		R = Q' / (Q' * Q);
 		p = p + 1;
 
-		while (ete_rae_min > (epsilon * length(InputSignalDup))) | (p ~= KernelSize)
+		while (ete_rae_min > (epsilon * length(InputSignalDup))) && (p ~= (KernelSize + 1))
 			for i = 1 : KernelSize
 				if ismember(X(:, i)', Q', 'rows') == 1
+					ete_rae(p, i) = inf;
 					continue
 				end
 				z_rae = R * X(:, i);
@@ -227,6 +238,10 @@ function [output, w, costs] = volterraFFEqualize(InputSignal, TrainingSignal, ..
 			else
 				KernelOrder = [KernelOrder; 3];
 			end
+			% find the center position
+			if i == floor(ChanLen1st / 2) + 1
+				CenterPosition = size(Q, 2);
+			end
 			R = [R + z_rae * g_rae; -g_rae];
 			p = p + 1;
 		end
@@ -235,35 +250,36 @@ function [output, w, costs] = volterraFFEqualize(InputSignal, TrainingSignal, ..
 		KernelOrder = [zeros(ChanLen1st, 1) + 1;
 									 zeros(Kernel2ndSize, 1) + 2;
 									 zeros(Kernel3rdSize, 1) + 3;];
+		CenterPosition = floor(ChanLen1st / 2) + 1;
 	end
 	% Define and randomly init weights vector to (-1, 1)
 	rng('shuffle');
-	w = rand(length(Q, 2), 1);
-	w = 2 * w - 1;
+	w = zeros(size(Q, 2), 1);
+	w(CenterPosition) = 1;
 	
 	%% Training epoch times
 	costs = zeros(epoch, 1);
 	y = zeros(size(TrainingSignalDup));
-	if AlgType == 'lms'
+	if strcmp(AlgType, 'lms')
 		% The LMS learning algorithm
 		for iter = 1 : epoch
-			for i = 1 : length(Q, 1)
+			for i = 1 : size(Q, 1)
 				y(i) = Q(i, :) * w;
 				% Construct a diagnose matrix for different learning rate of different order
-				alpha = [alpha1st; alpha2nd; alpha3rd];
+				alpha = [Alpha1st; Alpha2nd; Alpha3rd];
 				alpha = diag(alpha(KernelOrder));
 				% learning step
-				w = w - alpha * (y(i) - TrainingSignalDup(i)) * kernel;
+				w = w - alpha * (y(i) - TrainingSignalDup(i)) * Q(i, :)';
 				costs(iter) = costs(iter) + 0.5 * ((y(i) - TrainingSignalDup(i)) ^ 2);
 			end
 			% Record the cost/error of each epoch
-			costs(iter) = costs(iter) / length(Q, 1);
+			costs(iter) = costs(iter) / size(Q, 1);
 		end
-	elseif AlgType == 'rls'
+	elseif strcmp(AlgType, 'rls')
 		% The RLS learning algorithm
-		Sd = eye(length(Q, 2));
+		Sd = eye(size(Q, 2));
 		for iter = 1 : epoch
-			for i = 1 : length(Q, 1)
+			for i = 1 : size(Q, 1)
 				x = Q(i, :)';
 				e = TrainingSignalDup(i) - w' * x;
 				phi = Sd * x;
@@ -272,12 +288,12 @@ function [output, w, costs] = volterraFFEqualize(InputSignal, TrainingSignal, ..
 				costs(iter) = costs(iter) + 0.5 * (e ^ 2);
 			end
 			% Record the cost/error of each epoch
-			costs(iter) = costs(iter) / length(Q, 1);
+			costs(iter) = costs(iter) / size(Q, 1);
 		end
 	end
 	
 	%% Using Trained Weights to Equalize Data
-	for i = 1 : length(Q, 1)
+	for i = 1 : size(Q, 1)
 		y(i) = Q(i, :) * w;
 	end
 	

@@ -63,7 +63,7 @@ function [output, ChnlCoeffs, costs] = mlseEqualize(InputSignal, TrainingSignal,
 		epoch = 5;
 	end
 	if ~exist('alpha','var') || isempty(alpha)
-		alpha = 0.01
+		alpha = 0.01;
 	end
 	
 	%% Signal Normalization and Duplication

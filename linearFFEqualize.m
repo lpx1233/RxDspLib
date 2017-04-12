@@ -59,7 +59,7 @@ function [output, w, costs] = linearFFEqualize(InputSignal, TrainingSignal, AlgT
 		error('linearFeedForwardEqualize:argChk', 'FFE taps must be odd');
 	end
 	
-	if (AlgType ~= 'lms') && (AlgType ~= 'rls')
+	if ~strcmp(AlgType, 'lms') && ~strcmp(AlgType, 'rls')
 		error('linearFeedForwardEqualize:argChk', 'AlgType must be lms or rls');
 	end
 

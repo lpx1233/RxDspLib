@@ -22,8 +22,8 @@ DataRate = 12.5e9;
 OverSamplingRatio = SampleRate / DataRate;
 % importing and eyediagram drawing
 SampledSignal = importdata('.\Sampled Data\40km+FBG+FILTER+-680\F2_00011.dat');
-% eyediagram(SampledSignal(1:100000), 4*OverSamplingRatio, 2*OverSamplingRatio, 0.5*OverSamplingRatio);
-% grid on;
+eyediagram(SampledSignal(1:100000), 4*OverSamplingRatio, 2*OverSamplingRatio, 0.5*OverSamplingRatio);
+grid on;
 
 %% Signal Synchronization and Extraction
 [ExtractedSignal, OriginalSignal] = syncAndExtractSignal(SampledSignal, OriginalData, OverSamplingRatio);

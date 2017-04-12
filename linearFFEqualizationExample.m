@@ -29,7 +29,8 @@ grid on;
 
 %% LMS Equalization
 % 101-tap FFE and training for 5 epochs
-[EqualizedSignal, w, costs] = linearFFEqualize(ExtractedSignal, OriginalSignal, 'lms', 101, 0.01, 5);
+% [EqualizedSignal, w, costs] = linearFFEqualize(ExtractedSignal, OriginalSignal, 'lms', 101, 0.01, 5);
+[EqualizedSignal, w, costs] = linearFFEqualize(ExtractedSignal, OriginalSignal, 'rls', 101, 0.99, 5);
 
 % plot the curve of convergence
 figure;
