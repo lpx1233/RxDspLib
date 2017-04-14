@@ -17,10 +17,12 @@ OriginalData = generateData();
 %% Import sampled data from DSO
 % Defining parameters
 SampleRate = 400e9;
-DataRate = 12.5e9;
+OSCRate = 80e9;
+DataRate = 25e9;
 OverSamplingRatio = SampleRate / DataRate;
 % importing and eyediagram drawing
-SampledSignal = importdata('.\Sampled Data\40km+FBG+FILTER+-680\F2_00011.dat');
+SampledSignal = importdata('.\Sampled Data\50G PAM4 BtB\obtb w dsf -15.txt');
+SampledSignal = resample(SampledSignal, SampleRate, OSCRate);
 eyediagram(SampledSignal(1:100000), 4*OverSamplingRatio, 2*OverSamplingRatio, 0.5*OverSamplingRatio);
 grid on;
 
@@ -29,8 +31,8 @@ grid on;
 
 %% LMS Equalization
 % 101-tap FFE and training for 5 epochs
-% [EqualizedSignal, w, costs] = linearFFEqualize(ExtractedSignal, OriginalSignal, 'lms', 101, 0.01, 5);
-[EqualizedSignal, w, costs] = linearFFEqualize(ExtractedSignal, OriginalSignal, 'rls', 101, 0.99, 5);
+[EqualizedSignal, w, costs] = linearFFEqualize(ExtractedSignal, OriginalSignal, 'lms', 1001, 0.001, 5);
+% [EqualizedSignal, w, costs] = linearFFEqualize(ExtractedSignal, OriginalSignal, 'rls', 301, 0.99, 2);
 
 % plot the curve of convergence
 figure;

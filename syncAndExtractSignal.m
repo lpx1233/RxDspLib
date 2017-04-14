@@ -36,10 +36,10 @@ function [ExtractedSignalUS, OriginalSignalUS] = syncAndExtractSignal(SampledDat
 	
 	% Preparing transmitted data
 	OriginalDataRemapped = (OriginalData - 1.5) * 2;
-	OriginalSignalUS = reshape(repmat(OriginalDataRemapped, 1, UpSamplingRatio)', UpSamplingRatio*numel(OriginalDataRemapped), 1);
+	OriginalSignalUS = reshape(repmat(OriginalDataRemapped, 1, UpSamplingRatio)', UpSamplingRatio * numel(OriginalDataRemapped), 1);
 	
 	% Correlation
 	CorrelationResult = conv(DownSampledData(1:end), conj(OriginalSignalUS(end:-1:1)));
-	[MaxCorr, index] = max(abs(CorrelationResult));
+	[MaxCorr, index] = max(CorrelationResult);
 	
 	ExtractedSignalUS = DownSampledData(index-length(OriginalData)*UpSamplingRatio+1 : index);

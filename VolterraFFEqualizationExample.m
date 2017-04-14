@@ -17,24 +17,33 @@ OriginalData = generateData();
 %% Import sampled data from DSO
 % Defining parameters
 SampleRate = 400e9;
-DataRate = 12.5e9;
+OSCRate = 80e9;
+DataRate = 25e9;
 OverSamplingRatio = SampleRate / DataRate;
 % importing and eyediagram drawing
-SampledSignal = importdata('.\Sampled Data\40km+FBG+FILTER+-680\F2_00011.dat');
-% eyediagram(SampledSignal(1:100000), 4*OverSamplingRatio, 2*OverSamplingRatio, 0.5*OverSamplingRatio);
-% grid on;
+SampledSignal = importdata('.\Sampled Data\50G PAM4 BtB\obtb w dsf -15.txt');
+SampledSignal = resample(SampledSignal, SampleRate, OSCRate);
+eyediagram(SampledSignal(1:100000), 4*OverSamplingRatio, 2*OverSamplingRatio, 0.5*OverSamplingRatio);
+grid on;
 
 %% Signal Synchronization and Extraction
 [ExtractedSignal, OriginalSignal] = syncAndExtractSignal(SampledSignal, OriginalData, OverSamplingRatio);
 
 %% Volterra FFE Equalization
-[EqualizedSignal, w, costs] = volterraFFEqualize(ExtractedSignal, OriginalSignal, 'lms', 10, 5, 0.01, [], [], [], [], false);
-% [EqualizedSignal, w, costs] = volterraFFEqualize(ExtractedSignal, OriginalSignal, 'rls', 10, 5, 0.999, [], [], [], [], false);
-
+[EqualizedSignal, w, costs] = volterraFFEqualize(ExtractedSignal, OriginalSignal, 'lms', 3, 9, 0.03, [], [], [], [], false);
+% [EqualizedSignal, w, costs] = volterraFFEqualize(ExtractedSignal, OriginalSignal, 'rls', 4, 9, 0.99999, [], [], [], [], false, 0.001);
+% EqualizedSignal = ExtractedSignal;
 % plot the curve of convergence
+% figure;
+% plot(costs);
+% title('Curve of Convergence of Volterra');
+% xlabel('Epoch'); ylabel('Cost');
+
+%% MLSE Equalization
+[EqualizedSignal, ChnlCoeffs, costs] = mlseEqualize(ExtractedSignal, OriginalSignal, 16, 1, 8);
 figure;
 plot(costs);
-title('Curve of Convergence');
+title('Curve of Convergence of MLSE');
 xlabel('Epoch'); ylabel('Cost');
 
 %% Signal Decision and BER Calculation
