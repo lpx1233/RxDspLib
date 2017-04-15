@@ -1,4 +1,4 @@
-function [BitErrorRate, SymErrorRate, BitErrorNum] = decisionAndCalcBerPAM4(InputSignal, OriginalData, threshold)
+function [BitErrorRate, SymErrorRate, BitErrorNum, OutputSignal] = decisionAndCalcBerPAM4(InputSignal, OriginalData, threshold)
 	% This function performs the PAM4 decision and bit error ratio calculation for PAM4.
 	% First the PAM4 decision will be performed and then the error counting and error ratio
 	%	calculation. The %threshold% for PAM4 decision is a optional parameter, which have the
@@ -19,28 +19,32 @@ function [BitErrorRate, SymErrorRate, BitErrorNum] = decisionAndCalcBerPAM4(Inpu
 	%     SymErrorRate
 	%       The symbol error ratio of the %InputSignal% comparing to %OriginalData%.
 	%     BitErrorNum
-	%       The number of bit error, which is 1/sym when only 1 bit changes and 2/sym 
+	%       The number of bit error, which is 1/sym when only 1 bit changes and 2/sym
 	%       when both bits change.
-	
+
 	%% Parameters Checking
 	narginchk(2, 3);
-	
-	if ~exist('threshold','var') || isempty(threshold)
-		threshold = [0.25; 0.5; 0.75];
-	end
-	
+
 	%% Input Signal Normalization
 	InputSignal = InputSignal - min(InputSignal);
 	InputSignal = InputSignal / max(InputSignal);
 	OriginalData = OriginalData - min(OriginalData);
 	OriginalData = (OriginalData / max(OriginalData)) * 3;
-	
+
+	if ~exist('threshold','var') || isempty(threshold)
+		threshold = zeros(3, 1);
+		threshold(2) = mean(InputSignal);
+		threshold(1) = mean(InputSignal(find(InputSignal <= threshold(2))));
+		threshold(3) = mean(InputSignal(find(InputSignal > threshold(2))));
+		% threshold = [0.25; 0.5; 0.75];
+	end
+
 	%% Input Signal Decision
 	InputSignal(find(InputSignal > threshold(3))) = 3;
 	InputSignal(find(InputSignal > threshold(2) & InputSignal <= threshold(3))) = 2;
 	InputSignal(find(InputSignal > threshold(1) & InputSignal <= threshold(2))) = 1;
 	InputSignal(find(InputSignal <= threshold(1))) = 0;
-	
+
 	%% Error Counting
 	SymErrorNum = length(find(InputSignal ~= OriginalData));
 	% The bit error number is 1/sym when only 1 bit changes and 2/sym when both bits change.
@@ -50,4 +54,5 @@ function [BitErrorRate, SymErrorRate, BitErrorNum] = decisionAndCalcBerPAM4(Inpu
 														+ length(find((InputSignal == 0) & (OriginalData == 3)));
 	SymErrorRate = SymErrorNum / length(OriginalData);
 	BitErrorRate = BitErrorNum / (2 * length(OriginalData));
-	
+
+	OutputSignal = InputSignal;

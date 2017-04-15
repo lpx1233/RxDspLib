@@ -5,12 +5,12 @@ function [output, w, costs] = volterraFFEqualize(InputSignal, TrainingSignal, ..
 																								ChanLen3rd, Alpha3rd, ...
 																								EnRAE, epsilon)
 	% This function performs the volterra feedforward equalization with LMS or RLS algorithm.
-	% For now only 1st-3rd order are supported. 1st order must be included, while 2nd 
+	% For now only 1st-3rd order are supported. 1st order must be included, while 2nd
 	% and 3rd orders are optional and controlled by the ChanLen2nd and ChanLen3rd
-	% flags. The LMS learning rate of different order can be different by adjusting the 
-	% Alpha1st, Alpha2nd and Alpha3rd. The equalizer will be trained on the 
+	% flags. The LMS learning rate of different order can be different by adjusting the
+	% Alpha1st, Alpha2nd and Alpha3rd. The equalizer will be trained on the
 	% InputSignal epoch times and will then perform a equalization.
-	% 
+	%
 	% input:
 	%     InputSignal
 	%       The input signal to be equalized.
@@ -56,16 +56,16 @@ function [output, w, costs] = volterraFFEqualize(InputSignal, TrainingSignal, ..
 	%       Weights of volterra series
 	%       Size: length(Q, 2), 1
 	%     costs
-	%       The costs after each training epoch, which is used to draw a 
+	%       The costs after each training epoch, which is used to draw a
 	%       curve of convergence and thus determine the best learning rate.
-	
+
 	%% Paramete_raer Checking
 	narginchk(3, 12);
-	
+
 	if ~exist('epoch','var') || isempty(epoch)
 		epoch = 1;
 	end
-	
+
 	if ~exist('ChanLen1st','var') || isempty(ChanLen1st)
 		ChanLen1st = 5;
 	end
@@ -76,11 +76,11 @@ function [output, w, costs] = volterraFFEqualize(InputSignal, TrainingSignal, ..
 			Alpha1st = 0.99;
 		end
 	end
-	
+
 	if ~exist('ChanLen2nd','var') || isempty(ChanLen2nd)
 		ChanLen2nd = ChanLen1st;
 	end
-	
+
 	if ~exist('Alpha2nd','var') || isempty(Alpha2nd)
 		Alpha2nd = Alpha1st;
 	end
@@ -88,24 +88,24 @@ function [output, w, costs] = volterraFFEqualize(InputSignal, TrainingSignal, ..
 	if ~exist('ChanLen3rd','var') || isempty(ChanLen3rd)
 		ChanLen3rd = ChanLen1st;
 	end
-	
+
 	if ~exist('Alpha3rd','var') || isempty(Alpha3rd)
 		Alpha3rd = Alpha1st;
 	end
-	
+
 	if ~exist('EnRAE','var') || isempty(EnRAE)
 		EnRAE = true;
 	end
-	
+
 	if ~exist('epsilon','var') || isempty(epsilon)
 		epsilon = 0.004;
 	end
-	
+
 	% TODO add some parameter checking
 	if (mod(ChanLen1st, 2) == 0) || (mod(ChanLen2nd, 2) == 0) || (mod(ChanLen3rd, 2) == 0)
 		error('volterraFeedForwardEqualize:argChk', 'Channel length must be odd');
 	end
-	
+
 	if ~strcmp(AlgType, 'lms') && ~strcmp(AlgType, 'rls')
 		error('volterraFeedForwardEqualize:argChk', 'AlgType must be lms or rls');
 	end
@@ -113,21 +113,21 @@ function [output, w, costs] = volterraFFEqualize(InputSignal, TrainingSignal, ..
 	if ChanLen1st <= 0
 		error('volterraFeedForwardEqualize:argChk', '1st order channel length must be bigger than 0');
 	end
-	
+
 	%% Signal Normalization and Duplication
 	% InputSignal and TrainingSignal is normalized to the range between 0-1.
 	InputSignal = InputSignal - min(InputSignal);
 	InputSignal = InputSignal / max(InputSignal);
 	TrainingSignal = TrainingSignal - min(TrainingSignal);
 	TrainingSignal = TrainingSignal / max(TrainingSignal);
-	
+
 	% Both signal is duplicated for better performance
 	InputSignalDup = repmat(InputSignal, 2, 1);
 	TrainingSignalDup = repmat(TrainingSignal, 2, 1);
 	% Zero Padding for input signal
 	MaxChanLen = max([ChanLen1st, ChanLen2nd, ChanLen3rd]);
 	InputSignalZP = [zeros(floor(MaxChanLen/2), 1); InputSignalDup; zeros(floor(MaxChanLen/2), 1)];
-	
+
 	%% Calculating the kernel size
 	KernelSize = ChanLen1st;
 	if ChanLen2nd ~= 0
@@ -150,7 +150,7 @@ function [output, w, costs] = volterraFFEqualize(InputSignal, TrainingSignal, ..
 		end
 		KernelSize = KernelSize + Kernel3rdSize;
 	end
-	
+
 	%% Weights Searching using RAE
 	% Generating input matrix
 	X = zeros(length(InputSignalDup), KernelSize);
@@ -176,22 +176,22 @@ function [output, w, costs] = volterraFFEqualize(InputSignal, TrainingSignal, ..
 				for n = m : ChanLen3rd
 					t = t + 1;
 					X(:, t) = InputSignalZP(floor(MaxChanLen/2) + k - floor(ChanLen3rd/2) : ...
-															floor(MaxChanLen/2) + k - floor(ChanLen3rd/2) + length(InputSignalDup) - 1) .*...
+														floor(MaxChanLen/2) + k - floor(ChanLen3rd/2) + length(InputSignalDup) - 1) .*...
 										InputSignalZP(floor(MaxChanLen/2) + m - floor(ChanLen3rd/2) : ...
-															floor(MaxChanLen/2) + m - floor(ChanLen3rd/2) + length(InputSignalDup) - 1) .*...
+														floor(MaxChanLen/2) + m - floor(ChanLen3rd/2) + length(InputSignalDup) - 1) .*...
 										InputSignalZP(floor(MaxChanLen/2) + n - floor(ChanLen3rd/2) : ...
-															floor(MaxChanLen/2) + n - floor(ChanLen3rd/2) + length(InputSignalDup) - 1);
+														floor(MaxChanLen/2) + n - floor(ChanLen3rd/2) + length(InputSignalDup) - 1);
 				end
 			end
 		end
 	end
-	
+
 	% RAE process: Q is the output selected kernel matrix
 	if EnRAE == true
 		y = TrainingSignalDup;
 		p = 1;
 		ete_rae = zeros(KernelSize, KernelSize);
-		
+
 		for i = 1 : KernelSize
 			w_rae = (X(:, i)' * y) / (X(:, i)' * X(:, i));
 			ete_rae(1, i) = y' * y - w_rae * X(:, i)' * y;
@@ -256,7 +256,7 @@ function [output, w, costs] = volterraFFEqualize(InputSignal, TrainingSignal, ..
 	rng('shuffle');
 	w = zeros(size(Q, 2), 1);
 	w(CenterPosition) = 1;
-	
+
 	%% Training epoch times
 	costs = zeros(epoch, 1);
 	y = zeros(size(TrainingSignalDup));
@@ -291,13 +291,12 @@ function [output, w, costs] = volterraFFEqualize(InputSignal, TrainingSignal, ..
 			costs(iter) = costs(iter) / size(Q, 1);
 		end
 	end
-	
+
 	%% Using Trained Weights to Equalize Data
 	for i = 1 : size(Q, 1)
 		y(i) = Q(i, :) * w;
 	end
-	
+
 	% TODO choose a half of the output
 	output = y(1 : length(y) / 2);
 	% output = y(length(y) / 2 + 1 : end);
-	

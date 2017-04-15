@@ -1,6 +1,6 @@
-%% This example shows the work flow for a receiver side dsp: data generation, 
+%% This example shows the work flow for a receiver side dsp: data generation,
 %% synchronization, signal extraction, PAM4 decision and BER calculation.
-%% Also the eyediagram is drawn, but since the equalizer is 1 sample/sym, 
+%% Also the eyediagram is drawn, but since the equalizer is 1 sample/sym,
 %% the equalized signal eyediagram cannot be drawn. What's more, the error
 %% performance of signal before and after equalization is compared.
 %% Equalization step uses MLSE equalizer.
@@ -29,7 +29,7 @@ grid on;
 [ExtractedSignal, OriginalSignal] = syncAndExtractSignal(SampledSignal, OriginalData, OverSamplingRatio);
 
 %% MLSE Equalization
-[EqualizedSignal, ChnlCoeffs, costs] = mlseEqualize(ExtractedSignal, OriginalSignal, 4, 1, 5);
+[EqualizedSignal, ChnlCoeffs, costs] = mlseEqualize(ExtractedSignal, OriginalSignal, 4);
 
 % plot the curve of convergence
 figure;
