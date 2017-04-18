@@ -4,18 +4,19 @@ OriginalSignal = importdata('.\Original Data\Original_Data.txt');
 % OriginalData = (OriginalData - 0.5) * 2;
 
 OriginalData_port1 = OriginalSignal;
-shiftnum = 7;
+shiftnum = 6;
 % OriginalData_port2 = [ones(shiftnum, 1); ~(OriginalSignal(1 : length(OriginalSignal) - shiftnum))];
-OriginalData_port2 = [~(OriginalSignal(shiftnum + 1 : length(OriginalSignal))); ones(shiftnum, 1)];
+OriginalData_port2 = [~(OriginalSignal(end - shiftnum + 1 : end));
+											~(OriginalSignal(1 : end - shiftnum))];
 % OriginalData_port2 = 1 - OriginalSignal;
 OriginalData = OriginalData_port1 + 2 * OriginalData_port2;
-% OriginalData = OriginalData_port2;
+% OriginalData = OriginalData_port1;
 SampleRate = 400e9;
 OSCRate = 80e9;
 DataRate = 25e9;
 OverSamplingRatio = SampleRate / DataRate;
 
-SampledSignal = importdata('.\Sampled Data\50G PAM4 BtB\obtb w dsf -15.txt');
+SampledSignal = importdata('.\Sampled Data\10dml25km10Apd\-16dsf.txt');
 
 SampledSignal = resample(SampledSignal, SampleRate, OSCRate);
 DownSampledData = SampledSignal(1 : OverSamplingRatio : end, 1);

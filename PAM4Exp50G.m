@@ -21,10 +21,10 @@ OSCRate = 80e9;
 DataRate = 25e9;
 OverSamplingRatio = SampleRate / DataRate;
 % importing and eyediagram drawing
-SampledSignal = importdata('.\Sampled Data\10dml25km10Apd\-16dsf.txt');
+SampledSignal = importdata('.\Sampled Data\soa10gdml10ApdBtb\-11.txt');
 SampledSignal = resample(SampledSignal, SampleRate, OSCRate);
-eyediagram(SampledSignal(1:100000), 4*OverSamplingRatio, 2*OverSamplingRatio, 0.5*OverSamplingRatio);
-grid on;
+% eyediagram(SampledSignal(1:100000), 4*OverSamplingRatio, 2*OverSamplingRatio, 0.5*OverSamplingRatio);
+% grid on;
 
 %% Signal Synchronization and Extraction
 [ExtractedSignal, OriginalSignal] = syncAndExtractSignal(SampledSignal, OriginalData, OverSamplingRatio);
@@ -35,40 +35,33 @@ fprintf('Bit number num: %d \n', BitErrorNum);
 fprintf('SER: %e\n', SymErrorRate);
 fprintf('BER: %e\n', BitErrorRate);
 
-%% Equalization Setup 1
-[EqualizedSignal, w, costs] = volterraFFEqualize(ExtractedSignal, OriginalSignal, 'rls', 3, 19, 0.999, [], [], [], [], false, 0.001);
-figure;
-plot(costs);
-title('Curve of Convergence of Volterra for setup 1');
-xlabel('Epoch'); ylabel('Cost');
+ChannelLength = 33 : 2 : 37;
+BitErrorNum = zeros(length(ChannelLength));
+for i = 1 : length(ChannelLength)
+	tic
+	%% Equalization Setup 1
+	[EqualizedSignal, w, costs] = volterraFFEqualize(ExtractedSignal, OriginalSignal, 'lms', 5, 119, 0.01, ChannelLength(i), [], 0, [], false, 0.001);
+	% [EqualizedSignal, w, costs] = linearFFEqualize(ExtractedSignal, OriginalSignal, 'lms', ChannelLength(i), 0.01, 5);
+	% figure;
+	% plot(costs);
+	% title('Curve of Convergence of FFE for dsp setup');
+	% xlabel('Epoch'); ylabel('Cost');
 
-[EqualizedSignal, ChnlCoeffs, costs] = mlseEqualize(EqualizedSignal, OriginalSignal, 8);
-figure;
-plot(costs);
-title('Curve of Convergence of MLSE for setup 1');
-xlabel('Epoch'); ylabel('Cost');
-% Signal Decision and BER Calculation
-[BitErrorRate, SymErrorRate, BitErrorNum] = decisionAndCalcBerPAM4(EqualizedSignal, OriginalSignal);
-fprintf('\nEqualization Setup 1: RLS Volterra length = 19, lambda = 0.999; MLSE states = 8\n');
-fprintf('Bit number num: %d \n', BitErrorNum);
-fprintf('SER: %e\n', SymErrorRate);
-fprintf('BER: %e\n', BitErrorRate);
+	% [EqualizedSignal, ChnlCoeffs, costs] = mlseEqualize(EqualizedSignal, OriginalSignal, 8);
+	% figure;
+	% plot(costs);
+	% title('Curve of Convergence of MLSE for setup 1');
+	% xlabel('Epoch'); ylabel('Cost');
+	% Signal Decision and BER Calculation
+	[BitErrorRate, SymErrorRate, BitErrorNum(i)] = decisionAndCalcBerPAM4(EqualizedSignal, OriginalSignal);
+	fprintf('\nEqualization Setup: Volterra LMS 1st order length = %d, 2nd order = %d, alpha = 0.01\n', 119, ChannelLength(i));
+	fprintf('Bit number num: %d \n', BitErrorNum(i));
+	fprintf('SER: %e\n', SymErrorRate);
+	fprintf('BER: %e\n', BitErrorRate);
+	toc
+end
 
-%% Equalization Setup 2
-[EqualizedSignal, w, costs] = volterraFFEqualize(ExtractedSignal, OriginalSignal, 'rls', 3, 21, 0.999, [], [], [], [], false, 0.001);
 figure;
-plot(costs);
-title('Curve of Convergence of Volterra for setup 2');
-xlabel('Epoch'); ylabel('Cost');
-
-[EqualizedSignal, ChnlCoeffs, costs] = mlseEqualize(EqualizedSignal, OriginalSignal, 8);
-figure;
-plot(costs);
-title('Curve of Convergence of MLSE for setup 2');
-xlabel('Epoch'); ylabel('Cost');
-% Signal Decision and BER Calculation
-[BitErrorRate, SymErrorRate, BitErrorNum] = decisionAndCalcBerPAM4(EqualizedSignal, OriginalSignal);
-fprintf('\nEqualization Setup 3: RLS Volterra length = 21, lambda = 0.999; MLSE states = 8\n');
-fprintf('Bit number num: %d \n', BitErrorNum);
-fprintf('SER: %e\n', SymErrorRate);
-fprintf('BER: %e\n', BitErrorRate);
+plot(ChannelLength, BitErrorNum);
+title('Curve of BitErrorNum');
+xlabel('FFE Channel Length'); ylabel('BitErrorNum');

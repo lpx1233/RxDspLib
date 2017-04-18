@@ -102,8 +102,18 @@ function [output, w, costs] = volterraFFEqualize(InputSignal, TrainingSignal, ..
 	end
 
 	% TODO add some parameter checking
-	if (mod(ChanLen1st, 2) == 0) || (mod(ChanLen2nd, 2) == 0) || (mod(ChanLen3rd, 2) == 0)
+	if ChanLen1st <= 0
+		error('volterraFeedForwardEqualize:argChk', '1st order Channel length must be greater than 0');
+	end
+
+	if mod(ChanLen1st, 2) == 0
 		error('volterraFeedForwardEqualize:argChk', 'Channel length must be odd');
+	end
+
+	if (ChanLen2nd ~= 0) && (ChanLen3rd ~= 0)
+		if (mod(ChanLen2nd, 2) == 0) || (mod(ChanLen3rd, 2) == 0)
+			error('volterraFeedForwardEqualize:argChk', 'Channel length must be odd');
+		end
 	end
 
 	if ~strcmp(AlgType, 'lms') && ~strcmp(AlgType, 'rls')
@@ -130,8 +140,9 @@ function [output, w, costs] = volterraFFEqualize(InputSignal, TrainingSignal, ..
 
 	%% Calculating the kernel size
 	KernelSize = ChanLen1st;
+	Kernel2ndSize = 0;
+	Kernel3rdSize = 0;
 	if ChanLen2nd ~= 0
-		Kernel2ndSize = 0;
 		for k = 1 : ChanLen2nd
 			for m = k : ChanLen2nd
 				Kernel2ndSize = Kernel2ndSize + 1;
@@ -140,7 +151,6 @@ function [output, w, costs] = volterraFFEqualize(InputSignal, TrainingSignal, ..
 		KernelSize = KernelSize + Kernel2ndSize;
 	end
 	if ChanLen3rd ~= 0
-		Kernel3rdSize = 0;
 		for k = 1 : ChanLen3rd
 			for m = k : ChanLen3rd
 				for n = m : ChanLen3rd

@@ -1,8 +1,8 @@
 function OriginalData = generateData(PAM4Flag, NewPRBSGenerationFlag)
-	% This function generate NRZ or PAM4 data from PRBS generator or local file 
-	% and then generate the data with synchronization header which is then 
+	% This function generate NRZ or PAM4 data from PRBS generator or local file
+	% and then generate the data with synchronization header which is then
 	% loaded to PPG.
-	% 
+	%
 	% input:(input parameter are all optional, the order of args follows the order below)
 	%		  PAM4Flag
 	%				The flag for PAM4 generation:
@@ -13,40 +13,40 @@ function OriginalData = generateData(PAM4Flag, NewPRBSGenerationFlag)
 	%				The flag for regenerating prbs data:
 	%			  	1: regenerating new data
 	%			  	0: load prbs data from ./Original Data/Original_Data_4096.txt
-	%				Note that if the ./Original Data/Original_Data_4096 doesn't exist, 
-	%				the program will automatically generate new data whether this flag 
+	%				Note that if the ./Original Data/Original_Data_4096 doesn't exist,
+	%				the program will automatically generate new data whether this flag
 	%				is set to 1 or 0.
 	%				Default value: 0
-	% output: 
+	% output:
 	%     OriginalData
 	%       The original PAM4 or NRZ data without synchronization header in row vector.
 	%       Size: OriginalDataLength, 1
-	
+
 	narginchk(0,4);
-	
+
 	if ~exist('OriginalDataLength','var') || isempty(OriginalDataLength)
 		OriginalDataLength = 2^12;
 	end
-	
+
 	if ~exist('PAM4Flag','var') || isempty(PAM4Flag)
 		PAM4Flag = 1;
 	end
-	
+
 	if ~exist('NewPRBSGenerationFlag','var') || isempty(NewPRBSGenerationFlag)
 		NewPRBSGenerationFlag = 0;
 	end
-	
+
 	% change the current directory to the folder which contains this m file
 	cd(fileparts(which(mfilename)));
-	
+
 	%% define parameter
 	PathToOriginalData = '.\Original Data\'; % relative path
 	OriginalDataFileName = 'Original_Data';
-	
+
 	if exist('.\Original Data', 'dir') == 0
 		mkdir('Original Data');
 	end
-	
+
 	%% PRBS generation
 	if (NewPRBSGenerationFlag == 1) || (exist(strcat(PathToOriginalData, OriginalDataFileName, '.txt'), 'file') == 0)
 		% h = commsrc.pattern('SamplingFrequency', 10000, ...
@@ -73,24 +73,24 @@ function OriginalData = generateData(PAM4Flag, NewPRBSGenerationFlag)
 			register = newregister;
 			OriginalData(i) = register(n);
 		end
-		
+
 		% save the prbs data to .\Original Data\Original_Data.txt
-		fid = fopen(strcat(PathToOriginalData, OriginalDataFileName, '.txt'), 'w'); 
-		fprintf(fid, '%d\r\n', OriginalData); 
+		fid = fopen(strcat(PathToOriginalData, OriginalDataFileName, '.txt'), 'w');
+		fprintf(fid, '%d\r\n', OriginalData);
 		fclose(fid);
 	end
 	OriginalData = importdata(strcat(PathToOriginalData, OriginalDataFileName, '.txt'));
-	
+
 	%% PAM4 generation
 	% use 2 same prbs data, delay one with 2 sym, multiply the other one with 2
 	% and then add the 2 data to form PAM4 data
 	if PAM4Flag == 1
 		OriginalData_port1 = OriginalData;
-		shiftnum = 7;
-		OriginalData_port2 = [~(OriginalData(shiftnum + 1 : end)); 
-													~(OriginalData(1 : shiftnum))];
+		shiftnum = 6;
+		OriginalData_port2 = [~(OriginalData(end - shiftnum + 1 : end));
+													~(OriginalData(1 : end - shiftnum))];
 		% OriginalData_port2 = [ones(shiftnum, 1); ~(OriginalData(1 : length(OriginalData) - shiftnum))];
-		OriginalData = 2 * OriginalData_port1 + OriginalData_port2;
+		OriginalData = OriginalData_port1 + 2 * OriginalData_port2;
 		% save the PAM4 data to .\Original Data\Original_Data_4096_PAM4.txt
 		fid = fopen(strcat(PathToOriginalData, OriginalDataFileName, '_PAM4.txt'), 'w');
 		fprintf(fid, '%d\r\n', OriginalData);
