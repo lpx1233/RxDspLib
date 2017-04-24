@@ -3,7 +3,7 @@ function [output, w, costs] = volterraFFEqualize(InputSignal, TrainingSignal, ..
 																								ChanLen1st, Alpha1st, ...
 																								ChanLen2nd, Alpha2nd, ...
 																								ChanLen3rd, Alpha3rd, ...
-																								EnRAE, epsilon)
+																								EnRAE, WeightNum)
 	% This function performs the volterra feedforward equalization with LMS or RLS algorithm.
 	% For now only 1st-3rd order are supported. 1st order must be included, while 2nd
 	% and 3rd orders are optional and controlled by the ChanLen2nd and ChanLen3rd
@@ -44,9 +44,9 @@ function [output, w, costs] = volterraFFEqualize(InputSignal, TrainingSignal, ..
 	%     EnRAE (optional)
 	%       The flag of enable RAE search algorithm.
 	%       Default: true
-	%     epsilon (optional)
-	%       The threshold of RAE.
-	%       Default: 0.004
+	%     WeightNum (optional)
+	%       The weight number to be simplified to by RAE.
+	%       Default: 100
 	%
 	% output:
 	%     output
@@ -97,8 +97,8 @@ function [output, w, costs] = volterraFFEqualize(InputSignal, TrainingSignal, ..
 		EnRAE = true;
 	end
 
-	if ~exist('epsilon','var') || isempty(epsilon)
-		epsilon = 0.004;
+	if ~exist('WeightNum','var') || isempty(WeightNum)
+		WeightNum = 150;
 	end
 
 	% TODO add some parameter checking
@@ -223,7 +223,7 @@ function [output, w, costs] = volterraFFEqualize(InputSignal, TrainingSignal, ..
 		R = Q' / (Q' * Q);
 		p = p + 1;
 
-		while (ete_rae_min > (epsilon * length(InputSignalDup))) && (p ~= (KernelSize + 1))
+		while (p <= WeightNum)
 			for i = 1 : KernelSize
 				if ismember(X(:, i)', Q', 'rows') == 1
 					ete_rae(p, i) = inf;

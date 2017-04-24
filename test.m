@@ -1,3 +1,7 @@
+clear all;
+close all;
+clc;
+
 OriginalSignal = importdata('.\Original Data\Original_Data.txt');
 % OriginalData = 1 - OriginalSignal;
 % OriginalData = circshift(OriginalData, 10);
@@ -16,7 +20,9 @@ OSCRate = 80e9;
 DataRate = 25e9;
 OverSamplingRatio = SampleRate / DataRate;
 
-SampledSignal = importdata('.\Sampled Data\10dml25km10Apd\-16dsf.txt');
+SampledSignal = importdata('.\Sampled Data\day2\10dml25km10Apd\-16dsf.txt');
+% eyediagram(SampledSignal(1:100000), 4*OverSamplingRatio, 2*OverSamplingRatio, 0.5*OverSamplingRatio);
+% grid on;
 
 SampledSignal = resample(SampledSignal, SampleRate, OSCRate);
 DownSampledData = SampledSignal(1 : OverSamplingRatio : end, 1);
