@@ -87,11 +87,16 @@ function OriginalData = generateData(PAM4Flag, NewPRBSGenerationFlag)
 	if PAM4Flag == 1
 		OriginalData_port1 = OriginalData;
 		% Day 2 Setup
-		shiftnum = 6;
-		OriginalData_port2 = [~(OriginalData(end - shiftnum + 1 : end));
-													~(OriginalData(1 : end - shiftnum))];
-		OriginalData = OriginalData_port1 + 2 * OriginalData_port2;
+		% shiftnum = 6;
+		% OriginalData_port2 = [~(OriginalData(end - shiftnum + 1 : end));
+		% 											~(OriginalData(1 : end - shiftnum))];
+		% OriginalData = OriginalData_port1 + 2 * OriginalData_port2;
 
+		% 20170428 Setup
+		shiftnum = 6;
+		OriginalData_port2 = [~(OriginalData(shiftnum + 1 : end));
+													~(OriginalData(1 : shiftnum))];
+		OriginalData = 2 * OriginalData_port1 + OriginalData_port2;
 
 		% save the PAM4 data to .\Original Data\Original_Data_4096_PAM4.txt
 		fid = fopen(strcat(PathToOriginalData, OriginalDataFileName, '_PAM4.txt'), 'w');
