@@ -22,11 +22,7 @@ function OriginalData = generateData(PAM4Flag, NewPRBSGenerationFlag)
 	%       The original PAM4 or NRZ data without synchronization header in row vector.
 	%       Size: OriginalDataLength, 1
 
-	narginchk(0,4);
-
-	if ~exist('OriginalDataLength','var') || isempty(OriginalDataLength)
-		OriginalDataLength = 2^12;
-	end
+	narginchk(0,2);
 
 	if ~exist('PAM4Flag','var') || isempty(PAM4Flag)
 		PAM4Flag = 1;
