@@ -1,6 +1,6 @@
-%% This example shows the work flow for a receiver side dsp: data generation, 
+%% This example shows the work flow for a receiver side dsp: data generation,
 %% synchronization, signal extraction, PAM4 decision and BER calculation.
-%% Also the eyediagram is drawn, but since the equalizer is 1 sample/sym, 
+%% Also the eyediagram is drawn, but since the equalizer is 1 sample/sym,
 %% the equalized signal eyediagram cannot be drawn. What's more, the error
 %% performance of signal before and after equalization is compared.
 
@@ -21,7 +21,7 @@ OSCRate = 80e9;
 DataRate = 25e9;
 OverSamplingRatio = SampleRate / DataRate;
 % importing and eyediagram drawing
-SampledSignal = importdata('.\Sampled Data\50G PAM4 BtB\obtb w dsf -15.txt');
+SampledSignal = importdata('.\Sampled Data\20170428\ebtb.txt');
 SampledSignal = resample(SampledSignal, SampleRate, OSCRate);
 eyediagram(SampledSignal(1:100000), 4*OverSamplingRatio, 2*OverSamplingRatio, 0.5*OverSamplingRatio);
 grid on;
@@ -31,14 +31,14 @@ grid on;
 
 %% LMS Equalization
 % 101-tap FFE and training for 5 epochs
-[EqualizedSignal, w, costs] = linearFFEqualize(ExtractedSignal, OriginalSignal, 'lms', 1001, 0.001, 5);
+% [EqualizedSignal, w, costs] = linearFFEqualize(ExtractedSignal, OriginalSignal, 'lms', 1001, 0.001, 5);
 % [EqualizedSignal, w, costs] = linearFFEqualize(ExtractedSignal, OriginalSignal, 'rls', 301, 0.99, 2);
 
 % plot the curve of convergence
-figure;
-plot(costs);
-title('Curve of Convergence');
-xlabel('Epoch'); ylabel('Cost');
+% figure;
+% plot(costs);
+% title('Curve of Convergence');
+% xlabel('Epoch'); ylabel('Cost');
 
 %% Signal Decision and BER Calculation
 % For the unequalized signal
@@ -49,8 +49,8 @@ fprintf('SER: %e\n', SymErrorRate);
 fprintf('BER: %e\n', BitErrorRate);
 
 % For the equalized signal
-[BitErrorRate, SymErrorRate, BitErrorNum] = decisionAndCalcBerPAM4(EqualizedSignal, OriginalSignal);
-fprintf('\nThe signal error after equalization\n');
-fprintf('Bit number num: %d \n', BitErrorNum);
-fprintf('SER: %e\n', SymErrorRate);
-fprintf('BER: %e\n', BitErrorRate);
+% [BitErrorRate, SymErrorRate, BitErrorNum] = decisionAndCalcBerPAM4(EqualizedSignal, OriginalSignal);
+% fprintf('\nThe signal error after equalization\n');
+% fprintf('Bit number num: %d \n', BitErrorNum);
+% fprintf('SER: %e\n', SymErrorRate);
+% fprintf('BER: %e\n', BitErrorRate);

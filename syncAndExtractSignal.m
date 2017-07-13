@@ -32,6 +32,7 @@ function [ExtractedSignalUS, OriginalSignalUS] = syncAndExtractSignal(SampledDat
 	end
 
 	% Downsampling
+	% TODO Change the mechanism of sync; There are some bugs here
 	DownSampledData = SampledData(1:OverSamplingRatio/UpSamplingRatio:end, 1);
 
 	% Preparing transmitted data

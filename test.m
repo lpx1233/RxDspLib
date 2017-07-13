@@ -2,29 +2,25 @@ clear all;
 close all;
 clc;
 
-OriginalSignal = importdata('.\Original Data\Original_Data.txt');
+%% change the current directory to the folder which contains this m file
+cd(fileparts(which(mfilename)));
 
-OriginalData_port1 = OriginalSignal;
-shiftnum = 6;
-% OriginalData_port2 = [ones(shiftnum, 1); ~(OriginalSignal(1 : length(OriginalSignal) - shiftnum))];
-OriginalData_port2 = [~(OriginalSignal(shiftnum + 1 : end)); ...
-											~(OriginalSignal(1 : shiftnum))];
-% OriginalData_port2 = 1 - OriginalSignal;
-OriginalData = 2 * OriginalData_port1 + OriginalData_port2;
-% OriginalData = OriginalData_port1;
-SampleRate = 400e9;
-OSCRate = 80e9;
-DataRate = 25e9;
+RawSignal = importdata('.\Sampled Data\RoF\wireless\rof_btb_eml20170713.dat');
+
+SampleRate = 600e9;
+OSCRate = 120e9;
+DataRate = 12.5e9;
 OverSamplingRatio = SampleRate / DataRate;
 
-SampledSignal = importdata('.\Sampled Data\20170428\woSOA wDSF BtB\-12_6.txt');
+SampledSignal = 100 * (RawSignal(:, 2) - mean(RawSignal(:, 2)));
 SampledSignal = resample(SampledSignal, SampleRate, OSCRate);
-ed1 = comm.EyeDiagram('DisplayMode','2D color histogram','OversamplingMethod','Input interpolation', 'SamplesPerSymbol', OverSamplingRatio, 'YLimits', [min(SampledSignal), max(SampledSignal)]);
-step(ed1, SampledSignal);
 
-% DownSampledData = SampledSignal(1 : OverSamplingRatio : end, 1);
-%
-% CorrelationResult = conv(DownSampledData(1:end), conj(OriginalData(end:-1:1)));
-% [MaxCorr, index] = max(abs(CorrelationResult));
-% plot(CorrelationResult)
-% find(abs(CorrelationResult) > 2500)
+t = RawSignal(:, 1);
+t = interp1(1:length(t), t, 1:OSCRate/SampleRate:length(t)+1);
+t = t';
+t = t(1:end-1);
+
+index = find(abs(t) < 1e-9);
+lo = sin(2*pi*25.5e9*t);
+
+plot(t(index), SampledSignal(index), t(index), lo(index), 'r')
