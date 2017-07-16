@@ -43,7 +43,7 @@ function [output, w, costs] = volterraFFEqualize(InputSignal, TrainingSignal, ..
 	%       Default: Alpha1st
 	%     EnRAE (optional)
 	%       The flag of enable RAE search algorithm.
-	%       Default: true
+	%       Default: false
 	%     WeightNum (optional)
 	%       The weight number to be simplified to by RAE.
 	%       Default: 100
@@ -94,7 +94,7 @@ function [output, w, costs] = volterraFFEqualize(InputSignal, TrainingSignal, ..
 	end
 
 	if ~exist('EnRAE','var') || isempty(EnRAE)
-		EnRAE = true;
+		EnRAE = false;
 	end
 
 	if ~exist('WeightNum','var') || isempty(WeightNum)
