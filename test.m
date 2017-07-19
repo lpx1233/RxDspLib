@@ -73,15 +73,17 @@ OriginalData_port1 = OriginalSignal;
 shiftnum = 58;
 OriginalData_port2 = [~(OriginalSignal(end - shiftnum + 1 : end));
 											~(OriginalSignal(1 : end - shiftnum))];
-% OriginalData = OriginalData_port1 + 2 * OriginalData_port2;
-OriginalData = OriginalData_port1;
-CorrelationResult = zeros(length(r) - OverSamplingRatio * length(OriginalData) + 1, 1);
-% Need 40min to extract signal
-parfor i = 1 : length(CorrelationResult)
-  % fprintf('Generating %dth result\n', i);
-  CorrelationResult(i) = sum(r(i : OverSamplingRatio : i + OverSamplingRatio * length(OriginalData) - 1) .* OriginalData);
-end
-plot(CorrelationResult)
-
+OriginalData = OriginalData_port1 + 2 * OriginalData_port2;
+% OriginalData = OriginalData_port1;
+% CorrelationResult = zeros(length(r) - OverSamplingRatio * length(OriginalData) + 1, 1);
+% % Need 40min to extract signal
+% parfor i = 1 : length(CorrelationResult)
+%   % fprintf('Generating %dth result\n', i);
+%   CorrelationResult(i) = sum(r(i : OverSamplingRatio : i + OverSamplingRatio * length(OriginalData) - 1) .* OriginalData);
+% end
+% plot(CorrelationResult)
+prbdet = comm.PreambleDetector('Input', 'Symbol', 'Detections', 'All', ...
+  'Threshold', 100, 'Preamble', OriginalData);
+idx = prbdet(r);
 % TODO: Remove tic/toc
 toc
