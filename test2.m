@@ -40,32 +40,39 @@ fprintf('BER: %e\n', BitErrorRate);
 % ylabel('ChannelLen') % y-axis label
 % zlabel('-log10(BER)') % y-axis label
 
-ChanLen1st = 101:10:301;
-ChanLen2nd = [0, 1:2:21];
-ChanLen3rd = [0, 1:2:7];
-alpha = [0.01; 0.003; 0.001];
-BER = zeros(length(ChanLen1st), length(ChanLen2nd), length(ChanLen3rd), length(alpha));
-for i = 1 : length(ChanLen1st)
-  for j = 1 : length(ChanLen2nd)
-    for k = 1 : length(ChanLen3rd)
-      for l = 1 : length(alpha)
+% ChanLen1st = 101:10:301;
+% ChanLen2nd = [0, 1:2:21];
+% ChanLen3rd = [0, 1:2:7];
+% alpha = [0.01; 0.003; 0.001];
+% BER = zeros(length(ChanLen1st), length(ChanLen2nd), length(ChanLen3rd), length(alpha));
+% for i = 1 : length(ChanLen1st)
+%   for j = 1 : length(ChanLen2nd)
+%     for k = 1 : length(ChanLen3rd)
+%       for l = 1 : length(alpha)
         tic
+
+        % TODO remove these parameter
+        ChanLen1st = 251;
+        ChanLen2nd = 25;
+        ChanLen3rd = 7;
+        alpha = 0.01;
+
         [EqualizedSignal, w, costs] = volterraFFEqualize(ExtractedSignal, OriginalData, 'lms', 10, ChanLen1st, alpha, ChanLen2nd, [], ChanLen3rd);
-        % figure;
-        % plot(costs);
-        % title('Curve of Convergence');
-        % xlabel('Epoch'); ylabel('Cost');
+        figure;
+        plot(costs);
+        title('Curve of Convergence');
+        xlabel('Epoch'); ylabel('Cost');
         [BitErrorRate, SymErrorRate, BitErrorNum] = decisionAndCalcBerPAM4(EqualizedSignal, OriginalData);
-        fprintf('Equalization Setup: Volterra LMS Channel Length Setup is [%d %d %d], alpha is %f\n', ChanLen1st(i), ChanLen2nd(j), ChanLen3rd(k), alpha(l));
+        fprintf('Equalization Setup: Volterra LMS Channel Length Setup is [%d %d %d], alpha is %f\n', ChanLen1st, ChanLen2nd, ChanLen3rd, alpha;
         fprintf('Bit number num: %d\n', BitErrorNum);
         fprintf('SER: %e\n', SymErrorRate);
         fprintf('BER: %e\n', BitErrorRate);
-        BER(i, j, k, l) = BitErrorRate;
+        % BER(i, j, k, l) = BitErrorRate;
         toc
-      end
-    end
-  end
-end
+%       end
+%     end
+%   end
+% end
 % meshz(log10(alpha), ChannelLen, -log10(BER));
 % title('BER vs ChannelLen & alpha')
 % xlabel('log10(alpha)') % x-axis label

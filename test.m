@@ -25,7 +25,7 @@ t = t(1:end-1);
 
 index = find(abs(t) < 1e-9);
 
-fc = 25e9;
+fc = 25.5e9;
 lo = cos(2*pi*fc*t) + i * -sin(2*pi*fc*t);
 % figure;
 % plot(t(index), SampledSignal(index), t(index), real(lo(index)), 'r')
