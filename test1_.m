@@ -82,13 +82,13 @@ f = Fs*(0:(L/2))/L;
 figure;
 plot(f,P1)
 
-MatchFilter = ones(OverSamplingRatio, 1);
-r = conv(r, MatchFilter, 'same');
-figure;
-subplot(2,1,1);
-plot(t(index), real(r(index)))
-subplot(2,1,2);
-plot(t(index), imag(r(index)))
+% MatchFilter = ones(OverSamplingRatio, 1);
+% r = conv(r, MatchFilter, 'same');
+% figure;
+% subplot(2,1,1);
+% plot(t(index), real(r(index)))
+% subplot(2,1,2);
+% plot(t(index), imag(r(index)))
 
 scatterplot(r)
 
@@ -103,54 +103,43 @@ f = Fs*(0:(L/2))/L;
 figure;
 plot(f,P1)
 
-carsync = comm.CarrierSynchronizer('Modulation', 'PAM', ...
-  'SamplesPerSymbol', OverSamplingRatio, ...
-  'ModulationPhaseOffset', 'Custom', ...
-  'CustomPhaseOffset', 0);
-[r, phError] = step(carsync, r);
+r = abs(r);
+r = (r - mean(r)) / std(r);
+% ed = comm.EyeDiagram('DisplayMode','2D color histogram','OversamplingMethod','Input interpolation', 'SamplesPerSymbol', 48, 'YLimits', [min(r(100000:200000)), max(r(100000:200000))]);
+% step(ed, r(100000:200000));
+% r = -real(r);
+% r = (r - mean(r)) / std(r);
 
-estFreqOffset = diff(phError)*SampleRate/(2*pi);
-rmean = cumsum(estFreqOffset)./(1:length(estFreqOffset))';
-figure;
-plot(rmean)
-xlabel('Symbols')
-ylabel('Estimated Frequency Offset (Hz)')
-grid
-scatterplot(r)
-
+% tic
+% symsync = comm.SymbolSynchronizer(...
+%   'TimingErrorDetector', 'Gardner (non-data-aided)', ...
+%   'SamplesPerSymbol', OverSamplingRatio);
+% r = step(symsync, r);
+% toc
+%
+% scatterplot(r)
+%
 % r = -real(r);
 % r = (r - mean(r)) / std(r);
 
 tic
-symsync = comm.SymbolSynchronizer(...
-  'TimingErrorDetector', 'Gardner (non-data-aided)', ...
-  'SamplesPerSymbol', OverSamplingRatio);
-r = step(symsync, r);
-toc
-
-scatterplot(r)
-
-r = -real(r);
-r = (r - mean(r)) / std(r);
-
-% tic
 % OverSamplingRatio = 1;
-% OriginalSignal = importdata('.\Original Data\Original_Data.txt');
-% OriginalSignal = (OriginalSignal - 0.5 ) * 2;
-% OriginalData_port1 = OriginalSignal;
-% shiftnum = 58;
-% OriginalData_port2 = [-(OriginalSignal(end - shiftnum + 1 : end));
-% 											-(OriginalSignal(1 : end - shiftnum))];
-% % OriginalData = OriginalData_port1 + 2 * OriginalData_port2;
+OriginalSignal = importdata('.\Original Data\Original_Data.txt');
+OriginalSignal = (OriginalSignal - 0.5 ) * 2;
+OriginalData_port1 = OriginalSignal;
+shiftnum = 58;
+OriginalData_port2 = [-(OriginalSignal(end - shiftnum + 1 : end));
+											-(OriginalSignal(1 : end - shiftnum))];
+OriginalData = OriginalData_port1 + 2 * OriginalData_port2;
 % OriginalData = OriginalData_port1;
-% CorrelationResult = zeros(length(r) - OverSamplingRatio * length(OriginalData) + 1, 1);
-% parfor i = 1 : length(CorrelationResult)
-%   CorrelationResult(i) = sum(r(i : OverSamplingRatio : i + OverSamplingRatio * length(OriginalData) - 1) .* OriginalData);
-% end
-% figure;
-% plot(CorrelationResult)
-% % TODO: Remove tic/toc
-% toc
+CorrelationResult = zeros(length(r) - OverSamplingRatio * length(OriginalData) + 1, 1);
+parfor i = 1 : length(CorrelationResult)
+  CorrelationResult(i) = sum(r(i : OverSamplingRatio : i + OverSamplingRatio * length(OriginalData) - 1) .* OriginalData);
+end
+figure;
+plot(CorrelationResult)
+% TODO: Remove tic/toc
+toc
 
 [a, index] = max(CorrelationResult);
 ExtractedSignal = r(index : OverSamplingRatio : index + length(OriginalData) * OverSamplingRatio - 1);
