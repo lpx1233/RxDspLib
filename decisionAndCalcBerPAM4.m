@@ -26,8 +26,9 @@ function [BitErrorRate, SymErrorRate, BitErrorNum, OutputSignal] = decisionAndCa
 	narginchk(2, 3);
 
 	%% Input Signal Normalization
-	InputSignal = InputSignal - min(InputSignal);
-	InputSignal = InputSignal / max(InputSignal);
+	% InputSignal = InputSignal - min(InputSignal);
+	% InputSignal = InputSignal / max(InputSignal);
+  InputSignal = (InputSignal - mean(InputSignal)) / std(InputSignal);
 	OriginalData = OriginalData - min(OriginalData);
 	OriginalData = (OriginalData / max(OriginalData)) * 3;
 
@@ -48,10 +49,10 @@ function [BitErrorRate, SymErrorRate, BitErrorNum, OutputSignal] = decisionAndCa
 	%% Error Counting
 	SymErrorNum = length(find(InputSignal ~= OriginalData));
 	% The bit error number is 1/sym when only 1 bit changes and 2/sym when both bits change.
-	BitErrorNum = SymErrorNum + length(find((InputSignal == 3) & (OriginalData == 0))) ...
-														+ length(find((InputSignal == 2) & (OriginalData == 1))) ...
-														+ length(find((InputSignal == 1) & (OriginalData == 2))) ...
-														+ length(find((InputSignal == 0) & (OriginalData == 3)));
+	BitErrorNum = SymErrorNum + length(find((InputSignal == 3) & (OriginalData == 1))) ...
+														+ length(find((InputSignal == 2) & (OriginalData == 0))) ...
+														+ length(find((InputSignal == 1) & (OriginalData == 3))) ...
+														+ length(find((InputSignal == 0) & (OriginalData == 2)));
 	SymErrorRate = SymErrorNum / length(OriginalData);
 	BitErrorRate = BitErrorNum / (2 * length(OriginalData));
 

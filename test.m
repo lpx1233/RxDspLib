@@ -5,10 +5,7 @@ clc;
 %% change the current directory to the folder which contains this m file
 cd(fileparts(which(mfilename)));
 
-% TODO: Remove tic/toc
-tic
-
-RawSignal = importdata('.\Sampled Data\RoF\wireless\40km\20170727tdc\C3rof 0dBm00000.dat');
+RawSignal = importdata('.\Sampled Data\RoF\wireless\40km\20170727tdc\C3rof 3dBm00000.dat');
 
 SampleRate = 600e9;
 OSCRate = 120e9;
@@ -40,7 +37,7 @@ f = Fs*(0:(L/2))/L;
 figure;
 plot(f,P1)
 
-r = bandPassFilter15G35G(SampledSignal);
+r = bandPassFilter12G38G(SampledSignal);
 
 X = r;
 L = length(X);
@@ -121,21 +118,24 @@ ylabel('Estimated Frequency Offset (Hz)')
 grid
 scatterplot(r)
 
-r = real(r);
-r = (r - mean(r)) / std(r);
+% r = -real(r);
+% r = (r - mean(r)) / std(r);
 
-% symsync = comm.SymbolSynchronizer(...
-%   'TimingErrorDetector', 'Early-Late (non-data-aided)', ...
-%   'SamplesPerSymbol', OverSamplingRatio);
 % tic
+% symsync = comm.SymbolSynchronizer(...
+%   'TimingErrorDetector', 'Gardner (non-data-aided)', ...
+%   'SamplesPerSymbol', OverSamplingRatio);
 % r = step(symsync, r);
 % toc
-% step(cd3, r)
+%
+% scatterplot(r)
 
-% TODO: Remove tic/toc
-toc
+r = -real(r);
+r = (r - mean(r)) / std(r);
+
 tic
 
+% OverSamplingRatio = 1;
 OriginalSignal = importdata('.\Original Data\Original_Data.txt');
 OriginalSignal = (OriginalSignal - 0.5 ) * 2;
 OriginalData_port1 = OriginalSignal;
@@ -145,8 +145,8 @@ OriginalData_port1 = OriginalSignal;
 shiftnum = 58;
 OriginalData_port2 = [-(OriginalSignal(end - shiftnum + 1 : end));
 											-(OriginalSignal(1 : end - shiftnum))];
-OriginalData = OriginalData_port1 + 2 * OriginalData_port2;
-% OriginalData = OriginalData_port1;
+% OriginalData = OriginalData_port1 + 2 * OriginalData_port2;
+OriginalData = OriginalData_port1;
 CorrelationResult = zeros(length(r) - OverSamplingRatio * length(OriginalData) + 1, 1);
 % Need 40min to extract signal
 parfor i = 1 : length(CorrelationResult)
@@ -155,8 +155,13 @@ parfor i = 1 : length(CorrelationResult)
 end
 figure;
 plot(CorrelationResult)
-% prbdet = comm.PreambleDetector('Input', 'Symbol', 'Detections', 'All', ...
-%   'Threshold', 100, 'Preamble', OriginalData);
-% idx = prbdet(r);
 % TODO: Remove tic/toc
 toc
+
+[a, index] = max(CorrelationResult);
+ExtractedSignal = r(index : OverSamplingRatio : index + length(OriginalData) * OverSamplingRatio - 1);
+[BitErrorRate, SymErrorRate, BitErrorNum, OutputSignal] =  decisionAndCalcBerPAM4(ExtractedSignal, OriginalData);
+fprintf('The signal error before equalization\n');
+fprintf('Bit error num: %d\n', BitErrorNum);
+fprintf('SER: %e\n', SymErrorRate);
+fprintf('BER: %e\n', BitErrorRate);

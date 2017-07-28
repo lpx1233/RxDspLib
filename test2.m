@@ -3,7 +3,7 @@ close all;
 clc;
 %% Change dir and recovery workspace
 cd(fileparts(which(mfilename)));
-load('.\Sampled Data\RoF\wireless\40km\20170727tdc\rof_1dBm_corr.mat')
+load('.\Sampled Data\RoF\wireless\40km\20170727tdc\rof_3dBm_corr.mat')
 
 [a, index] = max(CorrelationResult);
 
