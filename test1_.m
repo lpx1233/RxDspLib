@@ -18,7 +18,7 @@ SampledSignal = resample(SampledSignal, SampleRate, OSCRate);
 t = (0:length(SampledSignal)-1)*(1/SampleRate);
 t = t';
 
-index = find(t < 1e-9);
+index = find( (t < 2e-9) & (t > 1e-9));
 
 fc = 25e9;
 lo = cos(2*pi*fc*t) + i * -sin(2*pi*fc*t);
@@ -37,7 +37,7 @@ f = Fs*(0:(L/2))/L;
 figure;
 plot(f,P1)
 
-r = bandPassFilter12G38G(SampledSignal);
+r = bandPassFilter15G35G(SampledSignal);
 
 X = r;
 L = length(X);
@@ -105,8 +105,21 @@ plot(f,P1)
 
 r = abs(r);
 r = (r - mean(r)) / std(r);
-% ed = comm.EyeDiagram('DisplayMode','2D color histogram','OversamplingMethod','Input interpolation', 'SamplesPerSymbol', 48, 'YLimits', [min(r(100000:200000)), max(r(100000:200000))]);
-% step(ed, r(100000:200000));
+
+r = r(501:end);
+X = r;
+L = length(X);
+Y = fft(X);
+P2 = abs(Y/L);
+P1 = P2(1:L/2+1);
+P1(2:end-1) = 2*P1(2:end-1);
+Fs = SampleRate;
+f = Fs*(0:(L/2))/L;
+figure;
+plot(f,P1)
+
+ed = comm.EyeDiagram('DisplayMode','2D color histogram','OversamplingMethod','Input interpolation', 'SamplesPerSymbol', 48, 'YLimits', [min(r(100000: 200000)), max(r(100000: 200000))]);
+step(ed, r(100000: 200000));
 % r = -real(r);
 % r = (r - mean(r)) / std(r);
 
@@ -148,3 +161,57 @@ fprintf('The signal error before equalization\n');
 fprintf('Bit error num: %d\n', BitErrorNum);
 fprintf('SER: %e\n', SymErrorRate);
 fprintf('BER: %e\n', BitErrorRate);
+
+% linear FFE
+
+% ChannelLen = 101:10:501;
+% alpha = [0.01; 0.003; 0.001];
+% BER = zeros(length(ChannelLen), length(alpha));
+% BitError = zeros(length(ChannelLen), length(alpha));
+% for i = 1 : length(ChannelLen)
+%   for j = 1 : length(alpha)
+%     [EqualizedSignal, w, costs] = linearFFEqualize(ExtractedSignal, OriginalData, 'lms', ChannelLen(i), alpha(j), 5);
+%     % figure;
+%     % plot(costs);
+%     % title('Curve of Convergence');
+%     % xlabel('Epoch'); ylabel('Cost');
+%
+%     [BitErrorRate, SymErrorRate, BitErrorNum] = decisionAndCalcBerPAM4(EqualizedSignal, OriginalData);
+%     fprintf('Equalization Setup: Linear LMS Channel Length is %d, alpha is %f\n', ChannelLen(i), alpha(j));
+%     fprintf('Bit error num: %d\n', BitErrorNum);
+%     fprintf('SER: %e\n', SymErrorRate);
+%     fprintf('BER: %e\n', BitErrorRate);
+%     BitError(i, j) = BitErrorNum;
+%     BER(i, j) = BitErrorRate;
+%   end
+% end
+% meshz(log10(alpha), ChannelLen, -log10(BER));
+% title('BER vs ChannelLen & alpha')
+% xlabel('log10(alpha)') % x-axis label
+% ylabel('ChannelLen') % y-axis label
+% zlabel('-log10(BER)') % y-axis label
+
+tic
+
+% TODO remove these parameter
+ChanLen1st = 301;
+ChanLen2nd = 33;
+ChanLen3rd = 11;
+alpha = 0.003;
+
+[EqualizedSignal, w, costs] = volterraFFEqualize(ExtractedSignal, OriginalData, 'lms', 10, ChanLen1st, alpha, ChanLen2nd, [], ChanLen3rd);
+figure;
+plot(costs);
+title('Curve of Convergence');
+xlabel('Epoch'); ylabel('Cost');
+
+EqualizedSignalUS = resample(EqualizedSignal, 48, 1);
+ed = comm.EyeDiagram('DisplayMode','2D color histogram','OversamplingMethod','Input interpolation', 'SamplesPerSymbol', 48, 'YLimits', [min(EqualizedSignalUS), max(EqualizedSignalUS)]);
+step(ed, EqualizedSignalUS);
+
+[BitErrorRate, SymErrorRate, BitErrorNum] = decisionAndCalcBerPAM4(EqualizedSignal, OriginalData);
+fprintf('Equalization Setup: Volterra LMS Channel Length Setup is [%d %d %d], alpha is %f\n', ChanLen1st, ChanLen2nd, ChanLen3rd, alpha);
+fprintf('Bit error num: %d\n', BitErrorNum);
+fprintf('SER: %e\n', SymErrorRate);
+fprintf('BER: %e\n', BitErrorRate);
+toc
