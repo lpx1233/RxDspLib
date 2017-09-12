@@ -5,7 +5,7 @@ clc;
 %% change the current directory to the folder which contains this m file
 cd(fileparts(which(mfilename)));
 
-RawSignal = importdata('.\Sampled Data\RoF\wireless\40km\20170801_2_4Vpp\C3rof 3dBm00000.dat');
+RawSignal = importdata('.\Sampled Data\RoF\wireless\40km\20170731_LO_Changed\C3rof 3dBm carrier00000.dat');
 
 SampleRate = 600e9;
 OSCRate = 120e9;
@@ -24,86 +24,86 @@ fc = 25e9;
 lo = cos(2*pi*fc*t) + i * -sin(2*pi*fc*t);
 
 figure;
-plot(t(index), SampledSignal(index), t(index), real(lo(index)), 'r')
-
-X = SampledSignal;
-L = length(X);
-Y = fft(X);
-P2 = abs(Y/L);
-P1 = P2(1:L/2+1);
-P1(2:end-1) = 2*P1(2:end-1);
-Fs = SampleRate;
-f = Fs*(0:(L/2))/L;
-figure;
-plot(f,20 * log10(P1))
-
-r = bandPassFilter12G38G(SampledSignal);
-
-figure;
-plot(t(index), r(index))
-
-X = r;
-L = length(X);
-Y = fft(X);
-P2 = abs(Y/L);
-P1 = P2(1:L/2+1);
-P1(2:end-1) = 2*P1(2:end-1);
-Fs = SampleRate;
-f = Fs*(0:(L/2))/L;
-figure;
-plot(f,20 * log10(P1))
-
-r = r .* lo;
-
-X = real(r);
-L = length(X);
-Y = fft(X);
-P2 = abs(Y/L);
-P1 = P2(1:L/2+1);
-P1(2:end-1) = 2*P1(2:end-1);
-Fs = SampleRate;
-f = Fs*(0:(L/2))/L;
-figure;
-plot(f,20 * log10(P1))
-
-r = lowPassFilter12_5G(r);
-
-figure;
-subplot(2,1,1);
-plot(t(index), real(r(index)))
-subplot(2,1,2);
-plot(t(index), imag(r(index)))
-
-X = real(r);
-L = length(X);
-Y = fft(X);
-P2 = abs(Y/L);
-P1 = P2(1:L/2+1);
-P1(2:end-1) = 2*P1(2:end-1);
-Fs = SampleRate;
-f = Fs*(0:(L/2))/L;
-figure;
-plot(f,20 * log10(P1))
-
-scatterplot(r)
-
-r = abs(r);
-r = (r - mean(r)) / std(r);
-
-r = r(501:end);
-X = r;
-L = length(X);
-Y = fft(X);
-P2 = abs(Y/L);
-P1 = P2(1:L/2+1);
-P1(2:end-1) = 2*P1(2:end-1);
-Fs = SampleRate;
-f = Fs*(0:(L/2))/L;
-figure;
-plot(f,20 * log10(P1))
-
-ed = comm.EyeDiagram('DisplayMode','2D color histogram','OversamplingMethod','Input interpolation', 'SamplesPerSymbol', 48, 'YLimits', [min(r(100000: 200000)), max(r(100000: 200000))]);
-step(ed, r(100000: 200000));
+% plot(t(index), SampledSignal(index), t(index), real(lo(index)), 'r')
+plot(t(index), SampledSignal(index))
+% X = SampledSignal;
+% L = length(X);
+% Y = fft(X);
+% P2 = abs(Y/L);
+% P1 = P2(1:L/2+1);
+% P1(2:end-1) = 2*P1(2:end-1);
+% Fs = SampleRate;
+% f = Fs*(0:(L/2))/L;
+% figure;
+% plot(f,20 * log10(P1))
+%
+% r = bandPassFilter12G38G(SampledSignal);
+%
+% figure;
+% plot(t(index), r(index))
+%
+% X = r;
+% L = length(X);
+% Y = fft(X);
+% P2 = abs(Y/L);
+% P1 = P2(1:L/2+1);
+% P1(2:end-1) = 2*P1(2:end-1);
+% Fs = SampleRate;
+% f = Fs*(0:(L/2))/L;
+% figure;
+% plot(f,20 * log10(P1))
+%
+% r = r .* lo;
+%
+% X = real(r);
+% L = length(X);
+% Y = fft(X);
+% P2 = abs(Y/L);
+% P1 = P2(1:L/2+1);
+% P1(2:end-1) = 2*P1(2:end-1);
+% Fs = SampleRate;
+% f = Fs*(0:(L/2))/L;
+% figure;
+% plot(f,20 * log10(P1))
+%
+% r = lowPassFilter12_5G(r);
+%
+% figure;
+% subplot(2,1,1);
+% plot(t(index), real(r(index)))
+% subplot(2,1,2);
+% plot(t(index), imag(r(index)))
+%
+% X = real(r);
+% L = length(X);
+% Y = fft(X);
+% P2 = abs(Y/L);
+% P1 = P2(1:L/2+1);
+% P1(2:end-1) = 2*P1(2:end-1);
+% Fs = SampleRate;
+% f = Fs*(0:(L/2))/L;
+% figure;
+% plot(f,20 * log10(P1))
+%
+% scatterplot(r)
+%
+% r = abs(r);
+% r = (r - mean(r)) / std(r);
+%
+% r = r(501:end);
+% X = r;
+% L = length(X);
+% Y = fft(X);
+% P2 = abs(Y/L);
+% P1 = P2(1:L/2+1);
+% P1(2:end-1) = 2*P1(2:end-1);
+% Fs = SampleRate;
+% f = Fs*(0:(L/2))/L;
+% figure;
+% plot(f,20 * log10(P1))
+%
+% ed = comm.EyeDiagram('DisplayMode','2D color histogram','OversamplingMethod','Input interpolation', 'SamplesPerSymbol', 48, 'YLimits', [min(r(100000: 200000)), max(r(100000: 200000))]);
+% step(ed, r(100000: 200000));
 
 tic
 % OverSamplingRatio = 1;
@@ -123,17 +123,17 @@ figure;
 plot(CorrelationResult)
 % TODO: Remove tic/toc
 toc
-
-[a, index] = max(CorrelationResult);
-ExtractedSignal = r(index : OverSamplingRatio : index + length(OriginalData) * OverSamplingRatio - 1);
-[BitErrorRate, SymErrorRate, BitErrorNum, OutputSignal] =  decisionAndCalcBerPAM4(ExtractedSignal, OriginalData);
-fprintf('The signal error before equalization\n');
-fprintf('Bit error num: %d\n', BitErrorNum);
-fprintf('SER: %e\n', SymErrorRate);
-fprintf('BER: %e\n', BitErrorRate);
+%
+% [a, index] = max(CorrelationResult);
+% ExtractedSignal = r(index : OverSamplingRatio : index + length(OriginalData) * OverSamplingRatio - 1);
+% [BitErrorRate, SymErrorRate, BitErrorNum, OutputSignal] =  decisionAndCalcBerPAM4(ExtractedSignal, OriginalData);
+% fprintf('The signal error before equalization\n');
+% fprintf('Bit error num: %d\n', BitErrorNum);
+% fprintf('SER: %e\n', SymErrorRate);
+% fprintf('BER: %e\n', BitErrorRate);
 
 % linear FFE
-%
+% 
 % ChannelLen = 101:10:501;
 % alpha = [0.001; 0.0003; 0.0001];
 % BER = zeros(length(ChannelLen), length(alpha));

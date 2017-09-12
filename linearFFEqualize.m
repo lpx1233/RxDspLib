@@ -1,5 +1,5 @@
 function [output, w, costs] = linearFFEqualize(InputSignal, TrainingSignal, AlgType, ...
-																							 FFETaps, alpha, epoch)
+                                                FFETaps, alpha, epoch)
 	% This function performs the feed forward equalization with LMS or RLS algorithm.
 	% First, the InputSignal and TrainingSignal will be normalized to 0-1.
 	% The training will use all the InputSignal and will be performed epoch times.
