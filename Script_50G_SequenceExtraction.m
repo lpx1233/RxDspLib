@@ -9,10 +9,12 @@ OSCRate = 80e9;
 DataRate = 28e9;
 SampleRate = lcm(OSCRate, DataRate);
 OverSamplingRatio = SampleRate / DataRate;
-FileDir = '.\Sampled Data\50G PAM4\201708\28gsym_pam4\25km\';
+FileDir = '.\Sampled Data\50G PAM4\201709\56gpam4_10dbm\25km\';
 FileList = dir(FileDir);
+ROP = '-19dBm';
+i = 0;
 for i = 0 : 9
-  FileName = ['C2-15dBm0000', num2str(i), '.dat'];
+  FileName = ['C2', ROP, '0000', num2str(i), '.dat'];
   SampledSignal = importdata([FileDir, FileName]);
   SampledSignal = resample(SampledSignal, SampleRate, OSCRate);
   SampledSignal = (SampledSignal - mean(SampledSignal)) / std(SampledSignal);
@@ -21,9 +23,15 @@ for i = 0 : 9
   % step(ed, SampledSignal);
 
   tic
-  OriginalData = importdata('.\Original Data\prbs15pam4.mat');
-  OriginalData = OriginalData';
-  OriginalData = (OriginalData - mean(OriginalData)) * 6;
+  OriginalSignal = importdata('.\Original Data\Original_Data.txt');
+  % OriginalData = OriginalData';
+  % OriginalData = (OriginalData - mean(OriginalData)) * 6;
+  OriginalSignal = (OriginalSignal - 0.5) * 2;
+  OriginalData_port1 = OriginalSignal;
+  shiftnum = 13035;
+  OriginalData_port2 = [-(OriginalSignal(shiftnum + 1 : end));
+						-(OriginalSignal(1 : shiftnum))];
+  OriginalData = 2 * OriginalData_port1 + OriginalData_port2;
   CorrelationResult = zeros(length(SampledSignal) - OverSamplingRatio * length(OriginalData) + 1, 1);
   parfor i = 1 : length(CorrelationResult)
     CorrelationResult(i) = sum(SampledSignal(i : OverSamplingRatio : i + OverSamplingRatio * length(OriginalData) - 1) .* OriginalData);
@@ -42,5 +50,5 @@ for i = 0 : 9
   fprintf('BER: %e\n', BitErrorRate);
 
   ExtractedSignal = SampledSignal(index : index + length(OriginalData) * OverSamplingRatio - 1);
-  csvwrite(['.\Sampled Data\50G PAM4\201708\28gsym_pam4\25km\extracted\-15dBm', num2str(i), '.csv'], ExtractedSignal);
+  csvwrite(['.\Sampled Data\50G PAM4\201709\56gpam4_10dbm\25km\extracted\', ROP, num2str(i), '.csv'], ExtractedSignal);
 end

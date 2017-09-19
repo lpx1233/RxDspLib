@@ -9,7 +9,7 @@ OSCRate = 80e9;
 DataRate = 25e9;
 SampleRate = lcm(OSCRate, DataRate);
 OverSamplingRatio = SampleRate / DataRate;
-FileName = '.\Sampled Data\50G PAM4\201708\826data\soa-8-10\-15.txt';
+FileName = '.\Sampled Data\50G PAM4\201708\826data\soa-6-10\-14.txt';
 
 SampledSignal = importdata(FileName);
 SampledSignal = resample(SampledSignal, SampleRate, OSCRate);
