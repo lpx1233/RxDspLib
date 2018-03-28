@@ -78,7 +78,7 @@ function [output, w, costs] = linearFFEqualize(InputSignal, TrainingSignal, AlgT
 	InputSignalDup = repmat(InputSignal, 2, 1);
 	TrainingSignalDup = repmat(TrainingSignal, 2, 1);
 	% Zero Padding for input signal
-	InputSignalZP = [zeros(floor(FFETaps/2), 1); InputSignalDup; zeros(floor(FFETaps/2), 1)];
+	InputSignalZP = [InputSignalDup(end-floor(FFETaps/2)+1 : end); InputSignalDup; InputSignalDup(1:floor(FFETaps/2))];
 
 	%% Weights Initializing
 	% TODO choose on : randomly init weights or init to 0

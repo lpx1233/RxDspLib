@@ -136,7 +136,7 @@ function [output, w, costs] = volterraFFEqualize(InputSignal, TrainingSignal, ..
 	TrainingSignalDup = repmat(TrainingSignal, 2, 1);
 	% Zero Padding for input signal
 	MaxChanLen = max([ChanLen1st, ChanLen2nd, ChanLen3rd]);
-	InputSignalZP = [zeros(floor(MaxChanLen/2), 1); InputSignalDup; zeros(floor(MaxChanLen/2), 1)];
+	InputSignalZP = [InputSignalDup(end-floor(MaxChanLen/2)+1 : end); InputSignalDup; InputSignalDup(1:floor(MaxChanLen/2))];
 
 	%% Calculating the kernel size
 	KernelSize = ChanLen1st;
@@ -258,8 +258,8 @@ function [output, w, costs] = volterraFFEqualize(InputSignal, TrainingSignal, ..
 	else
 		Q = X;
 		KernelOrder = [zeros(ChanLen1st, 1) + 1;
-									 zeros(Kernel2ndSize, 1) + 2;
-									 zeros(Kernel3rdSize, 1) + 3;];
+    					 zeros(Kernel2ndSize, 1) + 2;
+    					 zeros(Kernel3rdSize, 1) + 3;];
 		CenterPosition = floor(ChanLen1st / 2) + 1;
 	end
 	% Define and randomly init weights vector to (-1, 1)
