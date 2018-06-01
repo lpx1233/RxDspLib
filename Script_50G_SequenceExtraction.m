@@ -6,78 +6,78 @@ clc;
 cd(fileparts(which(mfilename)));
 
 OSCRate = 80e9;
-DataRate = 25e9;
+DataRate = 33e9;
 SampleRate = lcm(OSCRate, DataRate);
 OverSamplingRatio = SampleRate / DataRate;
-FileDir = '.\Sampled Data\201801\O-band DML\40G PD\obtb\';
+ProjectDir = '.\Sampled Data\201805lt\';
+FileDir = [ProjectDir, 'O-band\33G PAM8\btb\prbs15\'];
 % FileDir = '.\Sampled Data\50G PAM4\201709\56gpam4_10dbm\25km\';
 % ROP = -22:-13;
-ROP = 5;
+ROP = -11;
 i = 0;
-% FileDirList = {'.\Sampled Data\201710\112G\56G_PAM4\25G_APD\50km+1700\', '.\Sampled Data\201710\112G\56G_PAM4\25G_APD\50km+850\', '.\Sampled Data\201710\112G\56G_PAM4\25G_APD\50km\', '.\Sampled Data\201710\112G\56G_PAM4\20G_PIN_EDFA\50km\', '.\Sampled Data\201710\112G\56G_PAM4\20G_PIN_EDFA\50km+850\', '.\Sampled Data\201710\112G\56G_PAM4\20G_PIN_EDFA\50km+1700\', '.\Sampled Data\201710\112G\56G_PAM4\20G_PIN_EDFA\obtb\'};
-% for k = 1 : 7
-%   FileDir = FileDirList{k};
-  % for ROP = -3 : 2 : 3
-  %   for i = 0 : 4
-      FileName = ['C2', num2str(ROP), 'dBm0000', num2str(i), '.dat'];
-      % FileName = ['C2obtb0000', num2str(i), '.dat'];
-      fprintf(['Processing ', replace([FileDir, 'raw\'], '\', '\\'), FileName, ' ...\n']);
-      % FileName = 'C2ebtb00000.dat';
-      SampledSignal = importdata([FileDir, 'raw\', FileName]);
-      SampledSignal = resample(SampledSignal, SampleRate, OSCRate);
-      SampledSignal = (SampledSignal - mean(SampledSignal)) / std(SampledSignal);
+% for ROP = -19 : 2 : -11
+  % for i = 0 : 4
+    % FileName = ['C2', num2str(ROP), 'dBm0000', num2str(i), '.dat'];
+    FileName = [num2str(ROP), '_', num2str(i), '.txt'];
+    FilePath = [FileDir, 'raw\', FileName];
+    fprintf(['Processing ', replace(FilePath, '\', '\\'), ' ...\n']);
+    SampledSignal = importdata(FilePath);
+    SampledSignal = (SampledSignal - mean(SampledSignal)) / std(SampledSignal);
+    SampledSignal = resample(SampledSignal, SampleRate, OSCRate);
+    mean(SampledSignal)
+    std(SampledSignal)
 
-      OriginalData = importdata(['.\Sampled Data\201801\pam4_', num2str(i), '.csv']);
-      % OriginalData = importdata('.\Sampled Data\50G PAM4\201709\56gpam4_10dbm\25km\extracted\prbs15pam4.csv');
-      % OriginalData = OriginalData';
-      % OriginalData = 3 - OriginalData;
-      % csvwrite([FileDir, 'extracted\pam4_', num2str(i), '.csv'], OriginalData);
-      OriginalData = (OriginalData - mean(OriginalData)) / std(OriginalData);
-      % OriginalSignal = (OriginalSignal - 0.5) * 2;
-      % OriginalData_port1 = OriginalSignal;
-      % shiftnum = 13035;
-      % OriginalData_port2 = [-(OriginalSignal(shiftnum + 1 : end));
-      % 				-(OriginalSignal(1 : shiftnum))];
-      % OriginalData = 2 * OriginalData_port1 + OriginalData_port2;
-      % tic
-      % CorrelationResult = zeros(length(SampledSignal) - OverSamplingRatio * length(OriginalData) + 1, 1);
-      % parfor i = 1 : length(CorrelationResult)
-      %   CorrelationResult(i) = sum(SampledSignal(i : OverSamplingRatio : i + OverSamplingRatio * length(OriginalData) - 1) .* OriginalData);
-      % end
-      % figure;
-      % plot(CorrelationResult);
-      % title(FileName);
-      % toc
+    OriginalData = importdata([ProjectDir, 'pam16_', num2str(i), '.csv']);
+    % OriginalData = importdata([ProjectDir, 'prbs15_pam16.csv']);
+    % OriginalData = importdata('.\Sampled Data\50G PAM4\201709\56gpam4_10dbm\25km\extracted\prbs15pam4.csv');
+    % OriginalData = OriginalData';
+    % OriginalData = 3 - OriginalData;
+    % csvwrite([FileDir, 'extracted\pam4_', num2str(i), '.csv'], OriginalData);
+    OriginalData = (OriginalData - mean(OriginalData)) / std(OriginalData);
+    % OriginalSignal = (OriginalSignal - 0.5) * 2;
+    % OriginalData_port1 = OriginalSignal;
+    % shiftnum = 13035;
+    % OriginalData_port2 = [-(OriginalSignal(shiftnum + 1 : end));
+    % 				-(OriginalSignal(1 : shiftnum))];
+    % OriginalData = 2 * OriginalData_port1 + OriginalData_port2;
+    % tic
+    % CorrelationResult = zeros(length(SampledSignal) - OverSamplingRatio * length(OriginalData) + 1, 1);
+    % parfor i = 1 : length(CorrelationResult)
+    %   CorrelationResult(i) = sum(SampledSignal(i : OverSamplingRatio : i + OverSamplingRatio * length(OriginalData) - 1) .* OriginalData);
+    % end
+    % figure;
+    % plot(CorrelationResult);
+    % title(FileName);
+    % toc
 
-      % plotInFreq(SampledSignal, SampleRate);
-      % SampledSignal = lowPass10G(SampledSignal);
-      % SampledSignal = (SampledSignal - mean(SampledSignal)) / std(SampledSignal);
-      plotInFreq(SampledSignal, SampleRate);
+    plotInFreq(SampledSignal, SampleRate);
+    % SampledSignal = lowPass10G(SampledSignal);
+    % SampledSignal = (SampledSignal - mean(SampledSignal)) / std(SampledSignal);
+    % plotInFreq(SampledSignal, SampleRate);
 
-      % TODO remove this
-      ed0 = comm.EyeDiagram('DisplayMode', '2D color histogram', 'OversamplingMethod', 'Input interpolation', 'SamplesPerSymbol', OverSamplingRatio, 'YLimits', [min(SampledSignal), max(SampledSignal)]);
-      step(ed0, SampledSignal);
-      % TODO Matched Filtering
-      SampledSignal = filter(ones(OverSamplingRatio, 1), 1, SampledSignal);
-      SampledSignal = (SampledSignal - mean(SampledSignal)) / std(SampledSignal);
-      plotInFreq(SampledSignal, SampleRate);
+    % % TODO remove this
+    % ed0 = comm.EyeDiagram('DisplayMode', '2D color histogram', 'OversamplingMethod', 'Input interpolation', 'SamplesPerSymbol', OverSamplingRatio, 'YLimits', [min(SampledSignal), max(SampledSignal)]);
+    % step(ed0, SampledSignal);
+    % % TODO Matched Filtering
+    % SampledSignal = filter(ones(OverSamplingRatio, 1), 1, SampledSignal);
+    % SampledSignal = (SampledSignal - mean(SampledSignal)) / std(SampledSignal);
+    % plotInFreq(SampledSignal, SampleRate);
 
-      tic
-      OriginalDataUS = upsample(OriginalData, OverSamplingRatio);
-      CorrelationResult = conv(SampledSignal, OriginalDataUS(end:-1:1), 'valid');
-      figure;
-      plot(CorrelationResult);
-      title(FileName);
-      toc
-      [a, index] = max(CorrelationResult);
+    % tic
+    % OriginalDataUS = upsample(OriginalData, OverSamplingRatio);
+    % CorrelationResult = conv(SampledSignal, OriginalDataUS(end:-1:1), 'valid');
+    % figure;
+    % plot(CorrelationResult);
+    % title(FileName);
+    % toc
+    % [a, index] = max(CorrelationResult);
 
-      % ExtractedSignal = SampledSignal(index : OverSamplingRatio : index + length(OriginalData) * OverSamplingRatio - 1);
-      % csvwrite([FileDir, 'extracted\', num2str(ROP), 'dBm', num2str(i), '.csv'], ExtractedSignal);
+    % ExtractedSignal = SampledSignal(index : OverSamplingRatio : index + length(OriginalData) * OverSamplingRatio - 1);
+    % csvwrite([FileDir, 'extracted\', num2str(ROP), 'dBm', num2str(i), '.csv'], ExtractedSignal);
 
-      ExtractedSignal = SampledSignal(index : index + length(OriginalData) * OverSamplingRatio - 1);
-      ed = comm.EyeDiagram('DisplayMode','2D color histogram','OversamplingMethod','Histogram interpolation', 'SamplesPerSymbol', OverSamplingRatio, 'YLimits', [min(ExtractedSignal), max(ExtractedSignal)]);
-      step(ed, ExtractedSignal);
-  %   end
+    % ExtractedSignal = SampledSignal(index : index + length(OriginalData) * OverSamplingRatio - 1);
+    % ed = comm.EyeDiagram('DisplayMode','2D color histogram','OversamplingMethod','Histogram interpolation', 'SamplesPerSymbol', OverSamplingRatio, 'YLimits', [min(ExtractedSignal), max(ExtractedSignal)]);
+    % step(ed, ExtractedSignal);
   % end
 % end
 

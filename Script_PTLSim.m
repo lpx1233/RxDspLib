@@ -20,7 +20,7 @@ plotInFreq(TxSignal, SampleRate)
 
 % Transmit through a band-limited AWGN channel
 RxSignal = TxSignal;
-RxSignal = zeros(size(TxSignal));
+% RxSignal = zeros(size(TxSignal));
 % RxSignal = awgn(RxSignal, 22.5);
 % RxSignal = lowPass10G(RxSignal);
 RxSignal = awgn(RxSignal, 20);
@@ -37,19 +37,19 @@ plotInFreq(RxSignal, SampleRate)
 RxSignal = filter(ones(OverSamplingRatio, 1), 1, RxSignal);
 plotInFreq(RxSignal, SampleRate)
 
-% % Extracted transmitted signal
-% tic
-% OriginalDataUS = upsample(PAM4Data, OverSamplingRatio);
-% CorrelationResult = conv(RxSignal, OriginalDataUS(end:-1:1), 'valid');
-% figure;
-% plot(CorrelationResult);
-% toc
-% [a, index] = max(CorrelationResult);
-%
+% Extracted transmitted signal
+tic
+OriginalDataUS = upsample(PAM4Data, OverSamplingRatio);
+CorrelationResult = conv(RxSignal, OriginalDataUS(end:-1:1), 'valid');
+figure;
+plot(CorrelationResult);
+toc
+[a, index] = max(CorrelationResult);
+
 % ExtractedSignal = RxSignal(index : index + DataLength * OverSamplingRatio - 1);
 % ed = comm.EyeDiagram('DisplayMode', '2D color histogram', 'OversamplingMethod', 'Input interpolation', 'SamplesPerSymbol', OverSamplingRatio, 'YLimits', [min(ExtractedSignal), max(ExtractedSignal)]);
 % step(ed, ExtractedSignal);
-%
+
 % ExtractedSignal = RxSignal(index : OverSamplingRatio : index + DataLength * OverSamplingRatio - 1);
 % Dataset = zeros(DataLength - 100, 101);
 % Noise = awgn(zeros(size(ExtractedSignal)), 25);
@@ -73,8 +73,8 @@ plotInFreq(RxSignal, SampleRate)
 % x_approx = z * U(:, 1 : k)';
 % figure;plot(sum(S));
 % sum(sum((x - x_approx) .^ 2)) / sum(sum((x) .^ 2))
-% csvwrite(['.\Sampled Data\Simulation\', 'rx.csv'], ExtractedSignal);
-% csvwrite(['.\Sampled Data\Simulation\', 'tx.csv'], PAM4Data);
+csvwrite(['.\Sampled Data\Simulation\', 'rx.csv'], ExtractedSignal);
+csvwrite(['.\Sampled Data\Simulation\', 'tx.csv'], PAM4Data);
 
 %% Aux Functions
 function y = plotInFreq(in, Fs)
